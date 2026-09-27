@@ -1,0 +1,134 @@
+[
+  {
+    "id": "brick",
+    "source": "masonry.png",
+    "sourceSha256": "205c6ab4bfb086934b4aa750611621cc62c07e401615f650b87198c3af6af884",
+    "normal": "Inferred micro-height gradients; not measured surface normals.",
+    "files": [
+      "brick.jpg",
+      "brick-normal.jpg",
+      "brick-rough.jpg"
+    ]
+  },
+  {
+    "id": "stone",
+    "source": "masonry.png",
+    "sourceSha256": "205c6ab4bfb086934b4aa750611621cc62c07e401615f650b87198c3af6af884",
+    "normal": "Inferred micro-height gradients; not measured surface normals.",
+    "files": [
+      "stone.jpg",
+      "stone-normal.jpg",
+      "stone-rough.jpg"
+    ]
+  },
+  {
+    "id": "ballast",
+    "source": "masonry.png",
+    "sourceSha256": "205c6ab4bfb086934b4aa750611621cc62c07e401615f650b87198c3af6af884",
+    "normal": "Inferred micro-height gradients; not measured surface normals.",
+    "files": [
+      "ballast.jpg",
+      "ballast-normal.jpg",
+      "ballast-rough.jpg"
+    ]
+  },
+  {
+    "id": "wood",
+    "source": "masonry.png",
+    "sourceSha256": "205c6ab4bfb086934b4aa750611621cc62c07e401615f650b87198c3af6af884",
+    "normal": "Inferred micro-height gradients; not measured surface normals.",
+    "files": [
+      "wood.jpg",
+      "wood-normal.jpg",
+      "wood-rough.jpg"
+    ]
+  },
+  {
+    "id": "scarlet",
+    "source": "hero.png",
+    "sourceSha256": "e03a0114709030b7b1ac2c8283af3af8d0c07c17e569b81511f4bb3b051fb661",
+    "normal": "Inferred micro-height gradients; not measured surface normals.",
+    "files": [
+      "scarlet.jpg",
+      "scarlet-normal.jpg",
+      "scarlet-rough.jpg"
+    ]
+  },
+  {
+    "id": "black",
+    "source": "hero.png",
+    "sourceSha256": "e03a0114709030b7b1ac2c8283af3af8d0c07c17e569b81511f4bb3b051fb661",
+    "normal": "Inferred micro-height gradients; not measured surface normals.",
+    "files": [
+      "black.jpg",
+      "black-normal.jpg",
+      "black-rough.jpg"
+    ]
+  },
+  {
+    "id": "leather",
+    "source": "hero.png",
+    "sourceSha256": "e03a0114709030b7b1ac2c8283af3af8d0c07c17e569b81511f4bb3b051fb661",
+    "normal": "Inferred micro-height gradients; not measured surface normals.",
+    "files": [
+      "leather.jpg",
+      "leather-normal.jpg",
+      "leather-rough.jpg"
+    ]
+  },
+  {
+    "id": "brass",
+    "source": "hero.png",
+    "sourceSha256": "e03a0114709030b7b1ac2c8283af3af8d0c07c17e569b81511f4bb3b051fb661",
+    "normal": "Inferred micro-height gradients; not measured surface normals.",
+    "files": [
+      "brass.jpg",
+      "brass-normal.jpg",
+      "brass-rough.jpg"
+    ]
+  },
+  {
+    "id": "green",
+    "source": "details.png",
+    "sourceSha256": "a9ff9b6714f87d444ec57f03f368ba01c05eaa5765c91435233a2b6daf137acf",
+    "normal": "Inferred micro-height gradients; not measured surface normals.",
+    "files": [
+      "green.jpg",
+      "green-normal.jpg",
+      "green-rough.jpg"
+    ]
+  },
+  {
+    "id": "cloth",
+    "source": "details.png",
+    "sourceSha256": "a9ff9b6714f87d444ec57f03f368ba01c05eaa5765c91435233a2b6daf137acf",
+    "normal": "Inferred micro-height gradients; not measured surface normals.",
+    "files": [
+      "cloth.jpg",
+      "cloth-normal.jpg",
+      "cloth-rough.jpg"
+    ]
+  },
+  {
+    "id": "enamel",
+    "source": "details.png",
+    "sourceSha256": "a9ff9b6714f87d444ec57f03f368ba01c05eaa5765c91435233a2b6daf137acf",
+    "normal": "Inferred micro-height gradients; not measured surface normals.",
+    "files": [
+      "enamel.jpg",
+      "enamel-normal.jpg",
+      "enamel-rough.jpg"
+    ]
+  },
+  {
+    "id": "soot",
+    "source": "details.png",
+    "sourceSha256": "a9ff9b6714f87d444ec57f03f368ba01c05eaa5765c91435233a2b6daf137acf",
+    "normal": "Inferred micro-height gradients; not measured surface normals.",
+    "files": [
+      "soot.jpg",
+      "soot-normal.jpg",
+      "soot-rough.jpg"
+    ]
+  }
+]
