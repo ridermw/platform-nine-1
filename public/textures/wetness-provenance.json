@@ -1,0 +1,31 @@
+{
+  "source": "reference/wetness.png",
+  "sourceSha256": "f695bb8c894ab546f5f78b651bf45498632ecb9379cb9d5399467a3c9f0d5819",
+  "camera": {
+    "position": [
+      -4.25,
+      2.5,
+      -8.1
+    ],
+    "target": [
+      2.75,
+      1.05,
+      34.0
+    ],
+    "fov": 46,
+    "near": 0.08,
+    "far": 180
+  },
+  "worldBounds": {
+    "x": [
+      -1.7,
+      -7.4
+    ],
+    "z": [
+      -8,
+      60
+    ],
+    "y": 0.838
+  },
+  "meaning": "Scalar water coverage for roughness and reflection alpha only; no beauty pixels."
+}

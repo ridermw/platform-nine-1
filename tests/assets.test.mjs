@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 
-const names=['locomotive','tender','carriage','trolley','bench','sign','lantern'];
+const names=['locomotive','tender','carriage','carriage-far','trolley','bench','sign','lantern'];
 for(const name of names) {
   test(`${name} is a complete isolated GLB, not a reference-image stand-in`,()=>{
     const buffer=readFileSync(`public/models/${name}.glb`);
@@ -13,6 +13,7 @@ for(const name of names) {
     const gltf=JSON.parse(buffer.subarray(20,20+jsonLength).toString());
     assert.equal(gltf.scenes.length,1);
     assert.ok(gltf.meshes.length>=3);
+    assert.ok(gltf.extensionsRequired.includes('KHR_draco_mesh_compression'));
     assert.ok(gltf.nodes.every(node=>node.name.startsWith(`${name}_`)));
     assert.equal(gltf.images,undefined,'Models must not carry projected target imagery.');
     for(const mesh of gltf.meshes) {

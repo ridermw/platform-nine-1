@@ -1,9 +1,11 @@
+import camera from './hero-camera.json';
+
 export const HERO = Object.freeze({
-  position: [-4.25, 2.50, -8.1] as const,
-  target: [2.75, 1.05, 34.0] as const,
-  fov: 46,
-  near: 0.08,
-  far: 180,
+  position: [camera.position[0],camera.position[1],camera.position[2]] as const,
+  target: [camera.target[0],camera.target[1],camera.target[2]] as const,
+  fov: camera.fov,
+  near: camera.near,
+  far: camera.far,
 });
 
 export const WORLD = Object.freeze({
@@ -18,7 +20,7 @@ export const WORLD = Object.freeze({
 });
 
 export const MODEL_NAMES = [
-  'locomotive', 'tender', 'carriage', 'trolley', 'bench', 'sign', 'lantern',
+  'locomotive', 'tender', 'carriage', 'carriage-far', 'trolley', 'bench', 'sign', 'lantern',
 ] as const;
 export type ModelName = typeof MODEL_NAMES[number];
 export const assetURL = (path: string) => `${import.meta.env.BASE_URL}${path}`;

@@ -19,8 +19,10 @@ export function createStation(m: Palette) {
     for(let x=edge+.36;x<wall;) {
       const width=Math.min(.58+pavingRandom()*.70,wall-x);
       const position=new THREE.Vector3(x+width/2,.776+pavingRandom()*.012,z+length/2);
-      flagstones.push(new THREE.Matrix4().compose(position,new THREE.Quaternion(),new THREE.Vector3(width-.017,.092,length-.015)));
-      flagstoneColors.push(new THREE.Color().setScalar(.65+pavingRandom()*.32));
+      const matrix=new THREE.Matrix4().compose(position,new THREE.Quaternion(),new THREE.Vector3(width-.017,.092,length-.015));
+      const color=new THREE.Color().setScalar(.65+pavingRandom()*.32);
+      flagstones.push(matrix);
+      flagstoneColors.push(color);
       x+=width;
     }
     z+=length;
@@ -142,9 +144,9 @@ export function createStation(m: Palette) {
   const roofPoint=(t:number,z:number,dy=0):[number,number,number] =>
     [roofCenter+roofRadius*Math.cos(t),roofSpring+roofRise*Math.sin(t)+dy,z];
   const roofGlass=new THREE.MeshStandardMaterial({
-    name:'Sooted roof glass',color:'#617574',metalness:.25,roughness:.55,
+    name:'Sooted roof glass',color:'#91a9c1',map:m.enamel.map,metalness:.25,roughness:.55,
     side:THREE.DoubleSide,transparent:true,opacity:.60,
-    emissive:'#80989c',emissiveIntensity:.13,
+    emissive:'#80989c',emissiveIntensity:.04,
   });
   const roofOpaque=m.wood.clone();
   roofOpaque.name='Sooted roof boards';roofOpaque.color.set('#b7a78f');roofOpaque.side=THREE.DoubleSide;
@@ -178,6 +180,7 @@ export function createStation(m: Palette) {
       }
     }
     if(z>=79) continue;
+    a.girder(m.iron,Array.from({length:31},(_,i)=>roofPoint(.22+i*(Math.PI-.44)/30,z+3.1,-.22)),.18,.14);
     for(let i=0;i<20;i++) {
       const t0=i*Math.PI/20,t1=(i+1)*Math.PI/20;
       a.beam(m.iron,roofPoint(t0,z),roofPoint(t0,z+6.2),.036,6);
@@ -188,7 +191,10 @@ export function createStation(m: Palette) {
       panel.setIndex([0,1,2,0,2,3]);panel.computeVertexNormals();
       a.add(panel,i>=6&&i<=12?roofGlass:roofOpaque);
       a.beam(m.iron,roofPoint(t0,z+3.1),roofPoint(t1,z+3.1),.022,6);
-      if(i%3===0) a.beam(m.iron,roofPoint(t0,z),roofPoint(t1,z+6.2),.018,6);
+      if(i>=5&&i<=13) {
+        a.beam(m.iron,roofPoint(t0,z),roofPoint(t1,z+6.2),.025,6);
+        a.beam(m.iron,roofPoint(t1,z),roofPoint(t0,z+6.2),.025,6);
+      }
       if(i>=6&&i<=12) {
         for(let k=1;k<4;k++) {
           a.beam(m.iron,roofPoint(t0,z+k*1.55),roofPoint(t1,z+k*1.55),.020,6);

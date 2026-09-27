@@ -67,14 +67,27 @@ async function boot() {
     element('loading-text').textContent=`Preparing the platform · ${loaded} / ${total}`;
   };
   manager.onError=url=>fail(new Error(`Asset failed: ${url}`));
-  const materials=await loadMaterials(manager);
+  const {palette:materials,wetness}=await loadMaterials(manager);
   const models=await loadModels(manager,materials);
   const world=new THREE.Group();
   world.name='Platform Nine world';world.scale.x=-1;
   scene.add(world);
   world.add(createStation(materials));
   const {group}=placeAssets(models,materials);world.add(group);
-  const steam=createSteam();world.add(steam.group,createWetPatches(),createLightShafts());
+  const steam=createSteam(),wetPatches=createWetPatches(wetness);
+  world.add(steam.group,wetPatches,createLightShafts());
+  // Capture the real station for coherent, world-derived metal reflections.
+  const probeTarget=new THREE.WebGLCubeRenderTarget(256,{type:THREE.HalfFloatType});
+  const probe=new THREE.CubeCamera(.1,130,probeTarget);
+  probe.position.set(-1.5,3.5,2.0);
+  group.visible=false;wetPatches.visible=false;steam.group.visible=false;
+  probe.update(renderer,scene);
+  group.visible=true;wetPatches.visible=true;steam.group.visible=true;
+  const stationPmrem=new THREE.PMREMGenerator(renderer);
+  const stationEnvironment=stationPmrem.fromCubemap(probeTarget.texture);
+  scene.environment=stationEnvironment.texture;scene.environmentIntensity=.75;
+  environmentTarget.dispose();probeTarget.dispose();stationPmrem.dispose();
+  renderer.shadowMap.needsUpdate=true;
 
   const composer=new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene,camera));
@@ -82,7 +95,7 @@ async function boot() {
   ao.blendIntensity=.52;
   ao.updateGtaoMaterial({radius:.42,distanceExponent:1.3,thickness:.8});
   composer.addPass(ao);
-  const bloom=new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.12,.5,1.4);
+  const bloom=new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.07,.45,1.8);
   composer.addPass(bloom);composer.addPass(new OutputPass());
   let time=0,last=performance.now(),frames=0;
   const durations:number[]=[];
@@ -98,14 +111,17 @@ async function boot() {
   });
   element('hide').addEventListener('click',()=>setUI(false));
   window.addEventListener('keydown',event=>{
+    if(event.repeat)return;
     if(event.key.toLowerCase()==='r')reset();
     if(event.key.toLowerCase()==='h')setUI(!uiVisible);
     if(event.key==='Escape') { navigation.setEnabled(false);setUI(true);element('explore').textContent='Explore the platform'; }
   });
-  window.addEventListener('resize',()=>{
+  const resize=()=>{
     camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
     renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);
-  });
+  };
+  window.addEventListener('resize',resize);
+  resize();
   const stats=()=>({
     ready,frames,errors:[...failures],exploring:navigation.enabled,
     meanFPS:durations.length?1000/(durations.reduce((a,b)=>a+b,0)/durations.length):0,
@@ -130,7 +146,7 @@ async function boot() {
     const frameTime=now-last;
     const dt=Math.min(frameTime/1000,.05);last=now;
     if(!capture)time+=dt;
-    if(navigation.enabled)navigation.update(dt);else controls.update();
+    if(navigation.enabled)navigation.update(dt);
     steam.update(time);
     const start=performance.now();
     renderer.info.reset();

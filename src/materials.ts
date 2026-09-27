@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import { assetURL } from './config';
+import { assetURL, WORLD } from './config';
 
 export type Palette = Record<string, THREE.MeshStandardMaterial>;
 
-export async function loadMaterials(manager: THREE.LoadingManager): Promise<Palette> {
+export async function loadMaterials(manager: THREE.LoadingManager): Promise<{palette:Palette;wetness:THREE.Texture}> {
   const loader = new THREE.TextureLoader(manager);
   const specs: [string, number, number, number][] = [
     ['brick', 0, 1, .26], ['stone', 0, 1, .26], ['ballast', .04, 1, .75],
@@ -25,14 +25,21 @@ export async function loadMaterials(manager: THREE.LoadingManager): Promise<Pale
       if(name==='black') t.repeat.set(1.5,1.5);
       if(name==='leather') t.repeat.set(2,2);
     }
-    const material = new THREE.MeshStandardMaterial({
+    const options = {
       name, map, normalMap, roughnessMap, metalness, roughness,
       normalScale: new THREE.Vector2(normalScale, normalScale),
-    });
+    };
+    const material = name==='black'||name==='scarlet'
+      ? new THREE.MeshPhysicalMaterial({...options,clearcoat:.30,clearcoatRoughness:.26})
+      : new THREE.MeshStandardMaterial(options);
     return [name, material] as const;
   }));
   const materials = Object.fromEntries(entries);
   materials.black.color.setScalar(.8);
+  materials.black.roughness=.72;
+  materials.scarlet.roughness=.80;
+  materials.scarlet.color.setRGB(.70,.62,.48);
+  materials.slab.color.setRGB(.65,.52,.42);
   materials.stone.color.set('#aaa391');
   materials.steel = materials.black.clone();
   materials.steel.color.setScalar(2.7);
@@ -59,7 +66,28 @@ export async function loadMaterials(manager: THREE.LoadingManager): Promise<Pale
   materials.glow = new THREE.MeshStandardMaterial({
     color: '#e8bb77', emissive: '#ffbf65', emissiveIntensity: .75, roughness: .35,
   });
-  return materials;
+  const wetness=await loader.loadAsync(assetURL('textures/wetness-world.png'));
+  wetness.flipY=false;wetness.anisotropy=8;
+  materials.slab.onBeforeCompile=shader=>{
+    shader.uniforms.floorWetness={value:wetness};
+    shader.vertexShader=shader.vertexShader
+      .replace('#include <common>','#include <common>\nvarying vec3 vFloorPoint;')
+      .replace('#include <project_vertex>',`vec4 floorPoint=vec4(transformed,1.0);
+        #ifdef USE_INSTANCING
+          floorPoint=instanceMatrix*floorPoint;
+        #endif
+        vFloorPoint=(modelMatrix*floorPoint).xyz;
+        #include <project_vertex>`);
+    shader.fragmentShader=shader.fragmentShader
+      .replace('#include <common>','#include <common>\nvarying vec3 vFloorPoint; uniform sampler2D floorWetness;')
+      .replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
+        vec2 floorUv=vec2((-vFloorPoint.x-${WORLD.edge.toFixed(2)})/${(WORLD.wall-WORLD.edge).toFixed(2)},(vFloorPoint.z+8.0)/68.0);
+        float water=texture2D(floorWetness,clamp(floorUv,0.0,1.0)).r;
+        roughnessFactor=mix(roughnessFactor,0.45,water);
+        diffuseColor.rgb*=mix(1.0,0.73,water);`);
+  };
+  materials.slab.customProgramCacheKey=()=> 'world-wetness-v1';
+  return {palette:materials,wetness};
 }
 
 export function signFace(enamel: THREE.Texture | null) {

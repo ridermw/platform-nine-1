@@ -1,10 +1,14 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { MODEL_NAMES, assetURL, type ModelName, WORLD } from './config';
 import { signFace, type Palette } from './materials';
 
 export async function loadModels(manager: THREE.LoadingManager, palette: Palette) {
   const loader=new GLTFLoader(manager);
+  const draco=new DRACOLoader(manager);
+  draco.setDecoderPath(assetURL('draco/'));draco.setWorkerLimit(2);
+  loader.setDRACOLoader(draco);
   const pairs=await Promise.all(MODEL_NAMES.map(async name=>{
     const gltf=await loader.loadAsync(assetURL(`models/${name}.glb`));
     gltf.scene.traverse(node=>{
@@ -25,6 +29,7 @@ export async function loadModels(manager: THREE.LoadingManager, palette: Palette
     gltf.scene.name=name;
     return [name,gltf.scene] as const;
   }));
+  draco.dispose();
   return Object.fromEntries(pairs) as Record<ModelName,THREE.Group>;
 }
 
@@ -41,22 +46,31 @@ export function placeAssets(models:Record<ModelName,THREE.Group>, m:Palette) {
   engine.scale.y=1.15;
   engine.scale.z=1.24;
   place('tender',[-1.40,0,12.5]);
-  for(let i=0;i<4;i++) place('carriage',[-1.40,0,16.6+i*10.5]);
-  const trolley=place('trolley',[5.95,WORLD.platform,-4.0],-.24,1.0);
+  for(let i=0;i<4;i++) {
+    const carriage=new THREE.LOD();
+    carriage.name='Distance-adaptive passenger carriage';
+    carriage.addLevel(models.carriage.clone(true),0);
+    carriage.addLevel(models['carriage-far'].clone(true),42);
+    carriage.position.set(-1.40,0,16.6+i*10.5);group.add(carriage);
+  }
+  const trolley=place('trolley',[5.95,WORLD.platform,-3.7],-.24,1.0);
   trolley.scale.y=.78;
   for(const z of [1.8,15,28,41,55]) place('bench',[6.58,WORLD.platform,z],-Math.PI/2);
-  const sign=place('sign',[5.73,4.63,2.4],0,1.45);
+  const sign=place('sign',[5.73,4.91,2.4],0,1.45);
   const face=new THREE.Mesh(new THREE.CircleGeometry(.452,96),signFace(m.enamel.map));
   face.rotation.y=Math.PI;
   face.position.z=-.046;
   sign.add(face);
   const lamps:THREE.PointLight[]=[];
-  for(const z of [1.9,9.5,21.9,34.3,46.7,59.1,71.5]) {
-    place('lantern',[7.0,3.92,z],-Math.PI/2,1.20);
+  for(const z of [12,18,28,40,52,64,74]) {
+    const hero=z===12,x=hero?5.7:6.8,y=hero?4.45:3.92;
+    place('lantern',[x,y,z],Math.PI/2,hero?1.5:1.20);
     const light=new THREE.PointLight('#ffbd6c',5.5,9,2);
-    light.position.set(6.80,3.92,z);
+    light.position.set(x-.12,y,z);
     group.add(light);lamps.push(light);
   }
+  const lampBoom=new THREE.Mesh(new THREE.BoxGeometry(1.13,.028,.038),m.iron);
+  lampBoom.position.set(6.85,4.0,12);group.add(lampBoom);
   // Smaller luggage by the benches.
   for(const [x,z] of [[6.52,2.7],[6.6,13.3],[6.48,27.3]]) {
     const luggage=new THREE.Group();
@@ -68,7 +82,6 @@ export function placeAssets(models:Record<ModelName,THREE.Group>, m:Palette) {
     }
     luggage.position.set(x,WORLD.platform,z);luggage.rotation.y=.1;group.add(luggage);
   }
-  // Original numerals and decoration are authored decals on real geometry.
   const plate=document.createElement('canvas');plate.width=512;plate.height=256;
   const ctx=plate.getContext('2d');
   if(!ctx) throw new Error('Could not create locomotive number plate.');
@@ -78,6 +91,7 @@ export function placeAssets(models:Record<ModelName,THREE.Group>, m:Palette) {
   const tex=new THREE.CanvasTexture(plate);tex.colorSpace=THREE.SRGBColorSpace;
   const number=new THREE.Mesh(new THREE.PlaneGeometry(.28,.14),new THREE.MeshStandardMaterial({map:tex,metalness:.4,roughness:.5}));
   number.rotation.y=Math.PI;number.position.set(-1.25,2.68,.17);group.add(number);
+  // Printed notices remain surface decals on real framed boards.
   const paper=document.createElement('canvas');paper.width=256;paper.height=640;
   const pc=paper.getContext('2d');
   if(!pc)throw new Error('Could not create station notices.');

@@ -5,20 +5,32 @@ The locked visual requirements are in [`goal.md`](goal.md).
 
 ## Progress
 
-**Checkpoint 2: runnable browser world.** The Three.js scene includes seven
+**Checkpoint 4: reviewed, runnable browser world.** The Three.js scene includes seven
 custom Blender-authored GLB assets, thirteen material sets, modular station
 architecture, lighting, animated steam, and optional exploration.
-The independent Dream Loop judgments are **4.0/10**, **4.5/10**, then **5.1/10**; visual acceptance
+The independent Dream Loop judgments are **4.0/10**, **4.5/10**, **5.1/10**, then **5.7/10**; visual acceptance
 requires at least **8.0/10** plus acceptable measured performance.
 The architectural rethink now has deep-section girders, connected roof columns,
 recessed window rooms, multilevel facades, laid slabs, diffuse puddle boundaries,
-and collision-bounded platform walking. The third judgment confirms structural
-improvement, but calls for better material response, wetness, lighting, and
-locomotive/prop detail.
+and collision-bounded platform walking. The latest judgment still calls for
+better material response, wetness, lighting, and locomotive/prop detail.
 This is a work-in-progress reconstruction, not a completed match.
 
 GitHub Pages is configured at **https://ridermw.github.io/platform-nine-1/**.
 Pushes to `main` run the build and asset checks, then deploy the static site.
+
+![Current Three.js browser render](public/preview.jpg)
+
+A materially different TRELLIS locomotive candidate scored **5.2/10** and was
+rejected; the authored locomotive remains in the runtime. Subsequent trolley
+and bench reconstruction requests were rejected by the provider's anonymous
+GPU quota. The candidate and verdicts remain local in `.dream-loop/`.
+
+The 4K manifest also links to an older companion run containing PBR sets,
+steam textures, and a scene contract. These have now been copied into
+`.dream-loop/reference/companion/` and are being evaluated. Several companion
+maps carry seam-check failures, and their normal/roughness maps are explicitly
+heuristic, so they are not automatically treated as ground truth.
 
 ## Run and capture
 
@@ -30,6 +42,7 @@ npm run dev -- --port 5173
 npm test
 npm run build
 npm run capture -- http://127.0.0.1:5173/platform-nine-1/ round-01
+npm run verify:browser
 ```
 
 Open `/platform-nine-1/`. Click **Explore the platform**, then drag to look,
@@ -40,11 +53,19 @@ exploration. `?capture` hides UI and fixes animation time for comparison.
 The capture command uses an isolated `agent-browser` session and saves the
 actual browser screenshot, metrics, and console output under `.dream-loop/captures/`.
 
-The initial 1920x1080 run measured approximately 60 FPS. The richer architectural
-checkpoint measured approximately 47 FPS with contact shadows and planar
-reflections, 639 draw calls, and 4.52 million triangles including repeated
-render passes. Static shadow caching removed redundant rendering. These are local
+The retained 1920x1080 scene measured approximately 60 FPS after closing the
+owned diagnostic browser sessions, with contact shadows and planar reflections,
+643 draw calls, and 4.82 million triangles including repeated render passes.
+The compressed GLB set is approximately 2.3 MB and includes a distant-coach LOD.
+Static shadow caching removed redundant rendering. These are local
 measurements, not guarantees for every browser or GPU.
+
+Browser checks cover movement, look, pause without snapping, exact reset,
+HUD toggling/held-key behavior, portrait layout, and resizing while model
+requests are deliberately held. They fail on browser/runtime errors.
+Keyboard assertions use individual DOM events where the pinned driver's
+native letter-key command duplicates events. The entry JS bundle remains
+about 1 MB before gzip; Vite reports a non-fatal chunk-size warning.
 
 - Inspected all 49 supplied reference images before further generation.
 - Created a locomotive, tender, carriage, luggage trolley, bench, sign, and lantern.
@@ -75,6 +96,15 @@ installation to view.
 maps. It requires Pillow and NumPy. Source atlases are local working assets;
 prepared runtime maps and their provenance are in `public/textures/`.
 Normal maps are inferred micro-height gradients, not measured normals.
+The supplied grayscale wetness pass is baked into fixed world-space roughness
+and reflection coverage by `scripts/bake_floor_wetness.py`. No target beauty
+pixels are projected onto the scene. The bake and renderer share
+`src/hero-camera.json`; the contract tests detect a stale camera/bake pairing.
+
+`scripts/prepare-decoders.mjs` copies Draco decoders from the pinned Three.js
+package during dev/build; no CDN is needed at runtime.
+`scripts/prepare_reference_mesh.py` preserves a generated candidate in the
+ignored candidate workspace for visual review, not automatic publication.
 
 Before requesting another generated image, inspect the reference inventory:
 

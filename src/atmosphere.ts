@@ -50,7 +50,7 @@ export function createSteam() {
 }
 
 export function addLighting(scene:THREE.Scene) {
-  scene.background=new THREE.Color('#86999d');
+  scene.background=new THREE.Color('#b4bec0');
   scene.fog=new THREE.FogExp2('#6d7e81',.012);
   scene.add(new THREE.HemisphereLight('#b9cfde','#413227',1.3));
   const key=new THREE.DirectionalLight('#ffdc9e',1.2);
@@ -69,6 +69,10 @@ export function addLighting(scene:THREE.Scene) {
   bouncedWindow.position.set(-5.5,5.0,4.8);bouncedWindow.lookAt(1.4,2.5,4.8);scene.add(bouncedWindow);
   const broadSkylight=new THREE.RectAreaLight('#b5c6d3',3.0,7,14);
   broadSkylight.position.set(-.5,8,7);broadSkylight.lookAt(0,0,7);scene.add(broadSkylight);
+  const frontBounce=new THREE.RectAreaLight('#c5d1d7',6,4,5);
+  frontBounce.position.set(-3.5,6,-5);frontBounce.lookAt(1.25,3.0,.5);scene.add(frontBounce);
+  const lateSun=new THREE.RectAreaLight('#eabd77',4,3,7);
+  lateSun.position.set(-2,8,42);lateSun.lookAt(-3,1,10);scene.add(lateSun);
 
   // Low-frequency station-shaped environment gives metal meaningful window highlights.
   const environment=new THREE.Scene();
@@ -86,30 +90,10 @@ export function addLighting(scene:THREE.Scene) {
   return environment;
 }
 
-export function createWetPatches() {
+export function createWetPatches(wetness:THREE.Texture) {
   const group=new THREE.Group();
   group.name='Localized wet stone reflections';
-  const random=seededRandom(612);
-  const vertices:number[]=[],uv:number[]=[],fade:number[]=[],indices:number[]=[];
-  for(let i=0;i<14;i++) {
-    const x0=3.4+random()*1.2,z0=-1.8+i*3.0;
-    const scale=.25+random()*.40;
-    const start=vertices.length/3;
-    vertices.push(x0,-z0,0);uv.push(x0,-z0);fade.push(1);
-    for(let ring=0;ring<2;ring++) for(let j=0;j<48;j++) {
-      const t=j*Math.PI*2/48,r=(.87+.08*Math.sin(t*3+i)+.035*Math.sin(t*7+i))*(ring?.99:.74);
-      const x=x0+r*Math.cos(t)*scale,y=-z0+r*Math.sin(t)*scale*.7;
-      vertices.push(x,y,0);uv.push(x,y);fade.push(ring?0:1);
-      const next=(j+1)%48;
-      if(ring===0)indices.push(start,start+1+j,start+1+next);
-      else indices.push(start+1+j,start+49+j,start+49+next,start+1+j,start+49+next,start+1+next);
-    }
-  }
-  const geometry=new THREE.BufferGeometry();
-  geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
-  geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
-  geometry.setAttribute('patchFade',new THREE.Float32BufferAttribute(fade,1));
-  geometry.setIndex(indices);geometry.computeVertexNormals();
+  const geometry=new THREE.PlaneGeometry(WORLD.wall-WORLD.edge,68);
   const reflector=new Reflector(geometry,{
     textureWidth:1024,textureHeight:1024,color:0x9f957e,clipBias:.004,multisample:0,
   });
@@ -120,11 +104,12 @@ export function createWetPatches() {
   const material=reflector.material;
   if(!(material instanceof THREE.ShaderMaterial))throw new Error('Reflector shader contract changed.');
   material.transparent=true;material.depthWrite=false;
+  material.uniforms.floorWetness={value:wetness};
   material.vertexShader=material.vertexShader
-    .replace('varying vec4 vUv;','varying vec4 vUv; attribute float patchFade; varying float vPatchFade;')
-    .replace('void main() {','void main() { vPatchFade = patchFade;');
+    .replace('varying vec4 vUv;','varying vec4 vUv; varying vec2 vWaterUv;')
+    .replace('void main() {','void main() { vWaterUv = vec2(uv.x,1.0-uv.y);');
   material.fragmentShader=material.fragmentShader
-    .replace('varying vec4 vUv;','varying vec4 vUv; varying float vPatchFade;')
+    .replace('varying vec4 vUv;','varying vec4 vUv; varying vec2 vWaterUv; uniform sampler2D floorWetness;')
     .replace('vec4 base = texture2DProj( tDiffuse, vUv );',
       `vec2 st = vUv.xy / vUv.w;
        vec2 d = vec2(0.0025);
@@ -133,9 +118,10 @@ export function createWetPatches() {
          + texture2D(tDiffuse, st+vec2(d.x,-d.y))
          + texture2D(tDiffuse, st+vec2(-d.x,d.y))) / 6.0;`)
     .replace('gl_FragColor = vec4( blendOverlay( base.rgb, color ), 1.0 );',
-      'gl_FragColor = vec4( blendOverlay( base.rgb, color ), 0.55 * vPatchFade );');
+      `float water=texture2D(floorWetness,vWaterUv).r;
+       gl_FragColor = vec4( blendOverlay( base.rgb, color ), 0.40*smoothstep(0.15,0.85,water) );`);
   reflector.rotation.x=-Math.PI/2;
-  reflector.position.y=WORLD.platform+.038;
+  reflector.position.set((WORLD.edge+WORLD.wall)/2,WORLD.platform+.038,26);
   group.add(reflector);
   return group;
 }
@@ -151,7 +137,7 @@ export function createLightShafts() {
       void main(){
         float across=pow(max(0.0,1.0-abs(vBeamUv.x*2.0-1.0)),2.4);
         float along=smoothstep(0.0,0.12,vBeamUv.y)*(1.0-smoothstep(0.60,1.0,vBeamUv.y));
-        gl_FragColor=vec4(tint,across*along*0.055);
+        gl_FragColor=vec4(tint,across*along*0.14);
       }`,
   });
   for(const z of [10,16.2,22.4,28.6]) {

@@ -4,6 +4,7 @@ from PIL import Image, ImageFilter, ImageOps, ImageEnhance
 import numpy as np
 import json
 import hashlib
+from bake_floor_wetness import build_mask
 
 root=Path(__file__).resolve().parents[1]
 out=root/"public/textures"
@@ -52,4 +53,5 @@ manifest.append({"id":"slab","source":"masonry stone quadrant crop [40,38,230,22
                  "sourceSha256":hashlib.sha256((root/".dream-loop/generated/masonry.png").read_bytes()).hexdigest(),
                  "files":["slab.jpg","slab-normal.jpg","slab-rough.jpg"]})
 (out/"provenance.json").write_text(json.dumps(manifest,indent=2)+"\n")
+build_mask(root)
 print(f"Prepared {len(manifest)} material sets.")

@@ -19,7 +19,7 @@ function browser(...args) {
 try {
   browser('set','viewport','1920','1080');
   browser('open',`${url}${url.includes('?')?'&':'?'}capture`);
-  browser('wait','--fn','window.platformNine?.stats().ready && window.platformNine.stats().frames > 90');
+  browser('wait','--fn','window.platformNine?.stats().ready && window.platformNine.stats().frames > 300');
   const result=browser('eval','window.platformNine.stats()');
   const stats=result.result ?? result;
   assert.equal(stats.ready,true);
