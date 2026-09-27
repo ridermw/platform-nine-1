@@ -20,12 +20,13 @@ class Sculpt:
     def __init__(self):
         self.parts = {}
 
-    def mesh(self, material, vertices, faces, uv=None):
-        data = self.parts.setdefault(material, [[], [], []])
+    def mesh(self, material, vertices, faces, uv=None, smooth=False):
+        data = self.parts.setdefault(material, [[], [], [], []])
         offset = len(data[0])
         data[0].extend(coord(v) for v in vertices)
         data[1].extend(tuple(offset + i for i in face) for face in faces)
         data[2].extend(uv or [(v[0] * .7 + v[2] * .19, v[1] * .7 + v[2] * .43) for v in vertices])
+        data[3].extend(smooth and len(face) == 4 for face in faces)
 
     def box(self, m, p, size):
         x, y, z = p
@@ -38,6 +39,14 @@ class Sculpt:
 
     def tube(self, m, points, radius, sides=10):
         pts = [Vector(p) for p in points]
+        if 3 < len(pts) < 9 and not isinstance(radius,list):
+            smooth_points=[]
+            for i in range(len(pts)-1):
+                p0,p1,p2,p3=pts[max(i-1,0)],pts[i],pts[i+1],pts[min(i+2,len(pts)-1)]
+                for j in range(8):
+                    t=j/8
+                    smooth_points.append(.5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t*t+(-p0+3*p1-3*p2+p3)*t*t*t))
+            pts=smooth_points+[pts[-1]]
         vertices, uv, faces = [], [], []
         length = 0
         stride = sides + 1
@@ -62,7 +71,7 @@ class Sculpt:
             uv.extend((.5+.5*math.cos(TAU*j/sides),.5+.5*math.sin(TAU*j/sides)) for j in range(sides))
             cap = tuple(start+j for j in range(sides))
             faces.append(tuple(reversed(cap)) if end == 0 else cap)
-        self.mesh(m,vertices,faces,uv)
+        self.mesh(m,vertices,faces,uv,smooth=True)
 
     def cylinder(self, m, a, b, radius, sides=32):
         self.tube(m,[a,b],radius,sides)
@@ -90,7 +99,7 @@ class Sculpt:
                 uv.append((j/sides,i/rings))
                 if i:
                     faces.append(((i-1)*sides+j,(i-1)*sides+(j+1)%sides,i*sides+(j+1)%sides,i*sides+j))
-        self.mesh(m,vertices,faces,uv)
+        self.mesh(m,vertices,faces,uv,smooth=True)
 
     def wheel(self,x,y,z,r):
         self.ring("steel",(x,y,z),r,.065,"x",64)
@@ -105,22 +114,27 @@ class Sculpt:
     def export(self, root, name, materials):
         scene=bpy.data.scenes.new("PlatformNine_"+name)
         bpy.context.window.scene=scene
-        for material,(vertices,faces,uv) in self.parts.items():
+        for material,(vertices,faces,uv,smooth) in self.parts.items():
             mesh=bpy.data.meshes.new(name+"_"+material)
             mesh.from_pydata(vertices,[],faces)
             mesh.update()
             layer=mesh.uv_layers.new(name="UVMap")
             for face in mesh.polygons:
-                face.use_smooth=len(face.vertices)==4
+                face.use_smooth=smooth[face.index]
                 for li in face.loop_indices:
                     layer.data[li].uv=uv[mesh.loops[li].vertex_index]
             obj=bpy.data.objects.new(name+"_"+material,mesh)
             scene.collection.objects.link(obj)
             obj.data.materials.append(materials[material])
+            bevel = obj.modifiers.new("Machined edge bevel", "BEVEL")
+            bevel.width = .025 if material == "leather" else .006
+            bevel.segments = 3 if material == "leather" else 2
+            bevel.limit_method = 'ANGLE'
+            bevel.angle_limit = .65
             obj.select_set(True)
         bpy.ops.export_scene.gltf(filepath=str(root/"public"/"models"/(name+".glb")),
                                   export_format="GLB",use_selection=True,export_yup=True,
-                                  use_active_scene=True,export_animations=False,export_materials="EXPORT")
+                                  use_active_scene=True,export_apply=True,export_animations=False,export_materials="EXPORT")
         return scene
 
 
@@ -129,7 +143,12 @@ def locomotive():
     s.box("black",(0,1.42,4.5),(1.55,.5,8.8))
     s.box("scarlet",(0,1.73,4.5),(2.9,.17,9.0))
     s.box("scarlet",(0,1.18,-.18),(2.9,.64,.22))
-    s.box("black",(0,1.66,-.03),(2.9,.40,.24))
+    s.mesh("black",[
+        (-1.45,1.48,-.32),(1.45,1.48,-.32),(1.22,2.02,-.06),(-1.22,2.02,-.06),
+        (-1.45,1.48,-.18),(1.45,1.48,-.18),(1.22,2.02,.08),(-1.22,2.02,.08)],
+        [(3,2,1,0),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)])
+    for x in [-1.12,-.74,-.37,0,.37,.74,1.12]:
+        s.bolt("steel",(x,1.92,-.09),radius=.026)
     for x in [-1.13,1.13]:
         s.cylinder("scarlet",(x,1.18,-.2),(x,1.18,-.58),.24)
         s.cylinder("steel",(x,1.18,-.60),(x,1.18,-.70),.32,64)
@@ -230,6 +249,11 @@ def locomotive():
         s.ring("steel",(0,.40+j*.13,-.65),.09,.019,"z",20)
     s.box("brass",(0,4.02,.40),(.17,.23,.12))
     s.cylinder("enamel",(0,4.03,.30),(0,4.03,.29),.057,24)
+    for vertices,_,_,_ in s.parts.values():
+        for i,(x,minus_z,y) in enumerate(vertices):
+            if minus_z>-.55 and y<2.38:
+                weight=1-max(0,min(1,(y-1.72)/.66))
+                vertices[i]=(x,minus_z,max(.035,y-.22*weight))
     return s
 
 
@@ -268,10 +292,10 @@ def trolley():
     for y in [.78,1.22]:
         s.cylinder("brass",(-.57,y,.38),(.57,y,.38),.022)
     trunk(s,(0,.74,0),(1.15,.75,.73))
-    trunk(s,(-.16,1.22,.10),(.87,.24,.54))
+    trunk(s,(-.4,.75,.45),(.35,.82,.32))
     trunk(s,(.02,.44,.02),(1.05,.18,.63))
     # Bird cage: individual wires with a smoothly domed top.
-    cx,cy,cz=-.29,1.37,.12
+    cx,cy,cz=-.29,1.15,.12
     r=.30
     s.cylinder("brass",(cx,cy,cz),(cx,cy+.045,cz),r,64)
     for i in range(40):
@@ -290,7 +314,7 @@ def trolley():
     for j in range(nz+1):
         t=j/nz
         z=.32-.84*t
-        y=1.42 if t<.63 else 1.42-(t-.63)*1.4
+        y=1.21 if t<.72 else 1.21-(t-.72)*1.8
         for i in range(nx+1):
             u=i/nx; x=.03+u*.58
             vs.append((x,y+.024*math.sin(u*TAU*5+t*4)+.014*math.sin(t*TAU*6),z))
@@ -298,10 +322,14 @@ def trolley():
             if i and j:
                 n=j*(nx+1)+i
                 fs.append((n,n-1,n-nx-2,n-nx-1))
-    s.mesh("cloth",vs,fs,uv)
+    s.mesh("cloth",vs,fs,uv,smooth=True)
     for k in range(42):
         x=.03+k*.58/41
-        s.tube("cloth",[(x,.91,-.52),(x+.006,.84,-.53),(x-.004,.77,-.52)],.004,5)
+        s.tube("cloth",[(x,.71,-.52),(x+.006,.64,-.53),(x-.004,.57,-.52)],.004,5)
+    # A folded return of the same blanket sits on the top face.
+    for j in range(3):
+        s.tube("cloth",[(.05,1.20+j*.018,-.18),(.09,1.24+j*.018,-.22),
+                        (.55,1.24+j*.018,-.22),(.60,1.20+j*.018,-.18)],.019,8)
     return s
 
 
@@ -310,11 +338,19 @@ def bench():
     for z in [-.25,-.125,0,.125,.25]:
         s.box("wood",(0,.52,z),(1.8,.055,.105))
     for y in [.68,.81,.94,1.07]:
-        s.box("wood",(0,y,.30),(1.8,.10,.055))
+        s.box("wood",(0,y,.30+(y-.68)*.22),(1.8,.10,.055))
     for x in [-.73,.73]:
         for z in [-.24,.24]:
             s.tube("black",[(x,.06,z+.10),(x,.4,z),(x,.55,z)],.045)
-        s.tube("black",[(x,.50,-.27),(x,.73,-.27),(x,.78,-.17),(x,.75,.29),(x,1.11,.31)],.03)
+        s.tube("black",[(x,.50,-.27),(x,.68,-.36),(x,.77,-.29),(x,.78,-.17),
+                        (x,.75,.14),(x,.85,.28),(x,1.12,.39)],.035)
+        s.ring("black",(x,.69,-.27),.083,.025,"x",40,8,.25,TAU)
+        s.ring("brass",(x,.69,-.27),.067,.009,"x",32,6,.25,TAU)
+        s.ring("black",(x,.30,.07),.16,.024,"x",40)
+        for angle in [0,PI/2,PI,3*PI/2]:
+            s.ring("black",(x,.30+.041*math.cos(angle),.07+.041*math.sin(angle)),.045,.013,"x",20,6)
+        s.tube("black",[(x,.05,-.30),(x,.30,-.16),(x,.53,-.24)],.044)
+        s.tube("black",[(x,.05,.34),(x,.30,.22),(x,.52,.28)],.044)
         for y in [.68,.81,.94,1.07]:
             s.bolt("brass",(x,y,.264),radius=.011)
     return s
@@ -395,14 +431,25 @@ def sign():
 
 def lantern():
     s=Sculpt()
-    s.box("enamel",(0,0,0),(.21,.35,.21))
-    for x in [-.13,.13]:
-        for z in [-.13,.13]:
-            s.cylinder("black",(x,-.21,z),(x,.21,z),.014,8)
-    for y in [-.22,.22]:
-        s.box("black",(0,y,0),(.31,.035,.31))
-    s.tube("black",[(0,.26,0),(0,.43,0),(0,.50,.30),(0,.35,.45)],.018)
-    s.ball("brass",(0,.3,0),.045)
+    # Six tapered glass panes, shaped cap, turned finials, and scroll bracket.
+    n=6
+    for i in range(n):
+        t=i*TAU/n;u=(i+1)*TAU/n
+        bottom=(.115*math.cos(t),-.22,.115*math.sin(t))
+        top=(.185*math.cos(t),.22,.185*math.sin(t))
+        s.mesh("enamel",[bottom,(.115*math.cos(u),-.22,.115*math.sin(u)),
+                         (.185*math.cos(u),.22,.185*math.sin(u)),top],[(0,1,2,3)])
+        s.cylinder("black",bottom,top,.015,8)
+    for y,r in [(-.24,.13),(.24,.20),(.27,.205)]:
+        s.cylinder("black",(0,y,0),(0,y+.025,0),r,6)
+    s.tube("black",[(0,.29,0),(0,.43,0)],[.20,.04],6)
+    for y,r in [(.43,.052),(.47,.038),(.52,.019),(-.28,.075),(-.34,.039),(-.40,.025)]:
+        s.ball("black",(0,y,0),r)
+    s.box("black",(0,-.31,.46),(.07,.50,.045))
+    s.cylinder("black",(0,-.30,0),(0,-.30,.45),.023)
+    s.tube("black",[(0,-.29,.04),(0,-.42,.09),(0,-.53,.32),(0,-.48,.45),(0,-.23,.46)],.016)
+    s.ring("black",(0,-.39,.30),.08,.012,"x",40,8,.3,TAU*1.6)
+    s.ball("brass",(0,.54,0),.026)
     return s
 
 

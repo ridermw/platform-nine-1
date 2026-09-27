@@ -6,12 +6,16 @@ The locked visual requirements are in [`goal.md`](goal.md).
 ## Progress
 
 **Checkpoint 2: runnable browser world.** The Three.js scene includes seven
-custom Blender-authored GLB assets, twelve material sets, modular station
+custom Blender-authored GLB assets, thirteen material sets, modular station
 architecture, lighting, animated steam, and optional exploration.
-The first independent Dream Loop judgment is **4.0/10**; visual acceptance
+The independent Dream Loop judgments are **4.0/10**, **4.5/10**, then **5.1/10**; visual acceptance
 requires at least **8.0/10** plus acceptable measured performance.
-Camera/layout, roof detail, material response, and interior lighting are being
-refined. This is a work-in-progress reconstruction, not a completed match.
+The architectural rethink now has deep-section girders, connected roof columns,
+recessed window rooms, multilevel facades, laid slabs, diffuse puddle boundaries,
+and collision-bounded platform walking. The third judgment confirms structural
+improvement, but calls for better material response, wetness, lighting, and
+locomotive/prop detail.
+This is a work-in-progress reconstruction, not a completed match.
 
 GitHub Pages is configured at **https://ridermw.github.io/platform-nine-1/**.
 Pushes to `main` run the build and asset checks, then deploy the static site.
@@ -28,20 +32,24 @@ npm run build
 npm run capture -- http://127.0.0.1:5173/platform-nine-1/ round-01
 ```
 
-Open `/platform-nine-1/`. Click **Explore the platform** to enable orbit/pan/zoom.
+Open `/platform-nine-1/`. Click **Explore the platform**, then drag to look,
+use **WASD/arrow keys** to walk, or scroll to approach. Walking is bounded to
+the platform and avoids the foreground trolley and benches.
 **R** resets the hero view; **H** toggles the interface; **Escape** pauses
 exploration. `?capture` hides UI and fixes animation time for comparison.
 The capture command uses an isolated `agent-browser` session and saves the
 actual browser screenshot, metrics, and console output under `.dream-loop/captures/`.
 
-The initial 1920x1080 run measured approximately 60 FPS on the development
-machine, 306 draw calls including postprocessing/shadow work, and 1.02 million
-rendered triangles per frame including repeated passes. These are local
+The initial 1920x1080 run measured approximately 60 FPS. The richer architectural
+checkpoint measured approximately 47 FPS with contact shadows and planar
+reflections, 639 draw calls, and 4.52 million triangles including repeated
+render passes. Static shadow caching removed redundant rendering. These are local
 measurements, not guarantees for every browser or GPU.
 
 - Inspected all 49 supplied reference images before further generation.
 - Created a locomotive, tender, carriage, luggage trolley, bench, sign, and lantern.
-- Prepared reference-guided albedo atlases and inferred normal/roughness maps.
+- Prepared reference-guided albedo atlases, clean iron/leather replacements,
+  and inferred normal/roughness maps.
 - No third-party model packs or reference-image backdrops are used.
 - Full-resolution reference images and working `.blend` files remain local in
   the gitignored `.dream-loop/` directory.

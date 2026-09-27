@@ -47,6 +47,33 @@ export class Architecture {
     this.add(new THREE.TubeGeometry(curve, Math.max(16, points.length * 3), radius, sides, false), material);
   }
 
+  girder(material: THREE.Material, points: Point[], depth=.32, width=.21) {
+    const profile=[
+      [-.5,-.5],[.5,-.5],[.5,-.36],[.09,-.36],[.09,.36],[.5,.36],
+      [.5,.5],[-.5,.5],[-.5,.36],[-.09,.36],[-.09,-.36],[-.5,-.36],
+    ];
+    const vertices:number[]=[],uv:number[]=[],indices:number[]=[];
+    const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));
+    const count=Math.max(points.length*3,20);
+    for(let i=0;i<=count;i++) {
+      const t=i/count,p=curve.getPoint(t),tangent=curve.getTangent(t);
+      const normal=new THREE.Vector3(tangent.y,-tangent.x,0).normalize();
+      for(const [u,v] of profile) {
+        vertices.push(p.x+normal.x*v*depth,p.y+normal.y*v*depth,p.z+u*width);
+        uv.push(u+.5,t*16);
+      }
+      if(i) for(let j=0;j<12;j++) {
+        const k=(j+1)%12,a=(i-1)*12+j,b=(i-1)*12+k,c=i*12+k,d=i*12+j;
+        indices.push(a,b,c,a,c,d);
+      }
+    }
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+    geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.setIndex(indices);
+    const flat=geo.toNonIndexed();flat.computeVertexNormals();geo.dispose();
+    this.add(flat,material);
+  }
+
   finish(parent: THREE.Group) {
     for (const [material, parts] of this.batches) {
       const geometry = mergeGeometries(parts, false);

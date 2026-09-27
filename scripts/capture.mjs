@@ -31,6 +31,7 @@ try {
   writeFileSync(`${output}/metrics.json`,JSON.stringify(stats,null,2)+'\n');
   const errors=browser('errors');
   writeFileSync(`${output}/console.json`,JSON.stringify(errors,null,2)+'\n');
+  assert.deepEqual(errors.errors,[],'Browser reported uncaught errors.');
   console.log(JSON.stringify({output,stats},null,2));
 } finally {
   browser('close');

@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
+import { Reflector } from 'three/addons/objects/Reflector.js';
+import { ImprovedNoise } from 'three/addons/math/ImprovedNoise.js';
 import { seededRandom, WORLD } from './config';
 
 export function createSteam() {
@@ -9,11 +12,16 @@ export function createSteam() {
   canvas.width=canvas.height=128;
   const ctx=canvas.getContext('2d');
   if(!ctx) throw new Error('Could not create steam texture.');
-  const gradient=ctx.createRadialGradient(64,64,2,64,64,61);
-  gradient.addColorStop(0,'rgba(221,223,219,0.32)');
-  gradient.addColorStop(.35,'rgba(211,216,212,0.22)');
-  gradient.addColorStop(1,'rgba(207,214,212,0)');
-  ctx.fillStyle=gradient;ctx.fillRect(0,0,128,128);
+  const image=ctx.createImageData(128,128);
+  const noise=new ImprovedNoise();
+  for(let y=0;y<128;y++) for(let x=0;x<128;x++) {
+    const dx=(x-64)/62,dy=(y-64)/62,r=dx*dx+dy*dy;
+    const cloud=.50+.28*noise.noise(x/19,y/19,1.4)+.13*noise.noise(x/8,y/8,2.1);
+    const alpha=Math.max(0,1-r)**2*Math.max(0,cloud)*.48;
+    const i=(y*128+x)*4;
+    image.data[i]=image.data[i+1]=image.data[i+2]=224;image.data[i+3]=alpha*255;
+  }
+  ctx.putImageData(image,0,0);
   const texture=new THREE.CanvasTexture(canvas);
   const particles:{sprite:THREE.Sprite;seed:number;low:boolean}[]=[];
   for(let i=0;i<95;i++) {
@@ -27,13 +35,13 @@ export function createSteam() {
       const age=(p.seed+time*(p.low?.048:.068))%1;
       const y=p.low?.75+age*.9:4.66+age*4.4;
       p.sprite.position.set(
-        p.low?1.14+age*.42+Math.sin(i*3.7+time*.4)*.12:Math.sin(i*2.3+age*4)*age*.26-age*.3,
-        y,
+        (p.low?1.14+age*.42+Math.sin(i*3.7+time*.4)*.12:Math.sin(i*2.3+age*4)*age*.26-age*.3)-1.4,
+        p.low?y:y+.68,
         p.low?1.7+(i%20)*.31+age*.8:1.2+age*2.0+Math.cos(i*1.7)*age*.24,
       );
-      const size=p.low?.55+age*.8:.34+age*1.25;
+      const size=p.low?.55+age*.8:.35+age*2.4;
       p.sprite.scale.set(size,size*1.15,1);
-      p.sprite.material.opacity=(p.low?.24:.52)*Math.sin(age*Math.PI);
+      p.sprite.material.opacity=(p.low?.23:.82)*Math.sin(age*Math.PI);
       p.sprite.material.rotation=p.seed*6+age*.8;
     }
   }
@@ -45,17 +53,22 @@ export function addLighting(scene:THREE.Scene) {
   scene.background=new THREE.Color('#86999d');
   scene.fog=new THREE.FogExp2('#6d7e81',.012);
   scene.add(new THREE.HemisphereLight('#b9cfde','#413227',1.3));
-  const key=new THREE.DirectionalLight('#ffdc9e',2.3);
+  const key=new THREE.DirectionalLight('#ffdc9e',1.2);
   key.position.set(5,13,26);key.target.position.set(-1,0,2);
   key.castShadow=true;
   key.shadow.mapSize.set(4096,4096);
   Object.assign(key.shadow.camera,{left:-16,right:16,top:20,bottom:-20,near:1,far:75});
   key.shadow.normalBias=.025;key.shadow.bias=-.00010;
   scene.add(key,key.target);
-  const fill=new THREE.DirectionalLight('#e9c99e',1.4);
+  const fill=new THREE.DirectionalLight('#e9c99e',2.0);
   fill.position.set(-4,7,-8);scene.add(fill);
-  const back=new THREE.DirectionalLight('#e0ecf2',.35);
+  const back=new THREE.DirectionalLight('#e0ecf2',.20);
   back.position.set(2,10,78);scene.add(back);
+  RectAreaLightUniformsLib.init();
+  const bouncedWindow=new THREE.RectAreaLight('#ebbe87',5.5,4,4);
+  bouncedWindow.position.set(-5.5,5.0,4.8);bouncedWindow.lookAt(1.4,2.5,4.8);scene.add(bouncedWindow);
+  const broadSkylight=new THREE.RectAreaLight('#b5c6d3',3.0,7,14);
+  broadSkylight.position.set(-.5,8,7);broadSkylight.lookAt(0,0,7);scene.add(broadSkylight);
 
   // Low-frequency station-shaped environment gives metal meaningful window highlights.
   const environment=new THREE.Scene();
@@ -75,22 +88,79 @@ export function addLighting(scene:THREE.Scene) {
 
 export function createWetPatches() {
   const group=new THREE.Group();
-  const material=new THREE.MeshPhysicalMaterial({
-    color:'#38372e',metalness:.30,roughness:.16,transparent:true,opacity:.65,
-    clearcoat:1,clearcoatRoughness:.06,depthWrite:false,
-  });
+  group.name='Localized wet stone reflections';
   const random=seededRandom(612);
-  for(let i=0;i<22;i++) {
-    const shape=new THREE.Shape();
-    for(let j=0;j<=40;j++) {
-      const t=j*Math.PI*2/40, r=.75+.16*Math.sin(j*2.3+i)+random()*.08;
-      const x=r*Math.cos(t),y=r*Math.sin(t)*.3;
-      if(j===0)shape.moveTo(x,y);else shape.lineTo(x,y);
+  const vertices:number[]=[],uv:number[]=[],fade:number[]=[],indices:number[]=[];
+  for(let i=0;i<14;i++) {
+    const x0=3.4+random()*1.2,z0=-1.8+i*3.0;
+    const scale=.25+random()*.40;
+    const start=vertices.length/3;
+    vertices.push(x0,-z0,0);uv.push(x0,-z0);fade.push(1);
+    for(let ring=0;ring<2;ring++) for(let j=0;j<48;j++) {
+      const t=j*Math.PI*2/48,r=(.87+.08*Math.sin(t*3+i)+.035*Math.sin(t*7+i))*(ring?.99:.74);
+      const x=x0+r*Math.cos(t)*scale,y=-z0+r*Math.sin(t)*scale*.7;
+      vertices.push(x,y,0);uv.push(x,y);fade.push(ring?0:1);
+      const next=(j+1)%48;
+      if(ring===0)indices.push(start,start+1+j,start+1+next);
+      else indices.push(start+1+j,start+49+j,start+49+next,start+1+j,start+49+next,start+1+next);
     }
-    const puddle=new THREE.Mesh(new THREE.ShapeGeometry(shape,32),material);
-    puddle.rotation.x=-Math.PI/2;puddle.position.set(2.7+random()*2.8,WORLD.platform+.033,-3+i*3.1);
-    puddle.scale.setScalar(.3+random()*.6);
-    group.add(puddle);
+  }
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+  geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+  geometry.setAttribute('patchFade',new THREE.Float32BufferAttribute(fade,1));
+  geometry.setIndex(indices);geometry.computeVertexNormals();
+  const reflector=new Reflector(geometry,{
+    textureWidth:1024,textureHeight:1024,color:0x9f957e,clipBias:.004,multisample:0,
+  });
+  const reflect=reflector.onBeforeRender;
+  reflector.onBeforeRender=function(renderer,scene,camera,geometry,material,group) {
+    if(!scene.overrideMaterial)reflect.call(this,renderer,scene,camera,geometry,material,group);
+  };
+  const material=reflector.material;
+  if(!(material instanceof THREE.ShaderMaterial))throw new Error('Reflector shader contract changed.');
+  material.transparent=true;material.depthWrite=false;
+  material.vertexShader=material.vertexShader
+    .replace('varying vec4 vUv;','varying vec4 vUv; attribute float patchFade; varying float vPatchFade;')
+    .replace('void main() {','void main() { vPatchFade = patchFade;');
+  material.fragmentShader=material.fragmentShader
+    .replace('varying vec4 vUv;','varying vec4 vUv; varying float vPatchFade;')
+    .replace('vec4 base = texture2DProj( tDiffuse, vUv );',
+      `vec2 st = vUv.xy / vUv.w;
+       vec2 d = vec2(0.0025);
+       vec4 base = (texture2D(tDiffuse, st) * 2.0
+         + texture2D(tDiffuse, st+d) + texture2D(tDiffuse, st-d)
+         + texture2D(tDiffuse, st+vec2(d.x,-d.y))
+         + texture2D(tDiffuse, st+vec2(-d.x,d.y))) / 6.0;`)
+    .replace('gl_FragColor = vec4( blendOverlay( base.rgb, color ), 1.0 );',
+      'gl_FragColor = vec4( blendOverlay( base.rgb, color ), 0.55 * vPatchFade );');
+  reflector.rotation.x=-Math.PI/2;
+  reflector.position.y=WORLD.platform+.038;
+  group.add(reflector);
+  return group;
+}
+
+export function createLightShafts() {
+  const group=new THREE.Group();group.name='Skylight scattering';
+  const material=new THREE.ShaderMaterial({
+    transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,
+    uniforms:{tint:{value:new THREE.Color('#c7c2a9')}},
+    vertexShader:`varying vec2 vBeamUv;
+      void main(){vBeamUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+    fragmentShader:`varying vec2 vBeamUv;uniform vec3 tint;
+      void main(){
+        float across=pow(max(0.0,1.0-abs(vBeamUv.x*2.0-1.0)),2.4);
+        float along=smoothstep(0.0,0.12,vBeamUv.y)*(1.0-smoothstep(0.60,1.0,vBeamUv.y));
+        gl_FragColor=vec4(tint,across*along*0.055);
+      }`,
+  });
+  for(const z of [10,16.2,22.4,28.6]) {
+    const start=new THREE.Vector3(-2,10.0,z),end=new THREE.Vector3(4.3,1.0,z+7);
+    const length=start.distanceTo(end);
+    const shaft=new THREE.Mesh(new THREE.PlaneGeometry(2.5,length),material);
+    shaft.position.copy(start).add(end).multiplyScalar(.5);
+    shaft.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),start.clone().sub(end).normalize());
+    group.add(shaft);
   }
   return group;
 }

@@ -1,6 +1,6 @@
 export const HERO = Object.freeze({
   position: [-4.25, 2.50, -8.1] as const,
-  target: [0.0, 2.65, 34.0] as const,
+  target: [2.75, 1.05, 34.0] as const,
   fov: 46,
   near: 0.08,
   far: 180,
@@ -8,7 +8,7 @@ export const HERO = Object.freeze({
 
 export const WORLD = Object.freeze({
   platform: 0.8,
-  edge: 1.85,
+  edge: 1.70,
   wall: 7.4,
   length: 76,
   roofCenter: -0.7,

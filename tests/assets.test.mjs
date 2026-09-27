@@ -27,9 +27,9 @@ for(const name of names) {
     }
   });
 }
-test('all twelve prepared materials have maps and provenance',()=>{
+test('all thirteen prepared materials have maps and provenance',()=>{
   const materials=JSON.parse(readFileSync('public/textures/provenance.json','utf8'));
-  assert.equal(materials.length,12);
+  assert.equal(materials.length,13);
   for(const material of materials) {
     assert.match(material.sourceSha256,/^[a-f0-9]{64}$/);
     for(const file of material.files) assert.ok(existsSync(`public/textures/${file}`));

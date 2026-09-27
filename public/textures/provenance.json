@@ -1,7 +1,7 @@
 [
   {
     "id": "brick",
-    "source": "masonry.png",
+    "source": "generated/masonry.png",
     "sourceSha256": "205c6ab4bfb086934b4aa750611621cc62c07e401615f650b87198c3af6af884",
     "normal": "Inferred micro-height gradients; not measured surface normals.",
     "files": [
@@ -12,7 +12,7 @@
   },
   {
     "id": "stone",
-    "source": "masonry.png",
+    "source": "generated/masonry.png",
     "sourceSha256": "205c6ab4bfb086934b4aa750611621cc62c07e401615f650b87198c3af6af884",
     "normal": "Inferred micro-height gradients; not measured surface normals.",
     "files": [
@@ -23,7 +23,7 @@
   },
   {
     "id": "ballast",
-    "source": "masonry.png",
+    "source": "generated/masonry.png",
     "sourceSha256": "205c6ab4bfb086934b4aa750611621cc62c07e401615f650b87198c3af6af884",
     "normal": "Inferred micro-height gradients; not measured surface normals.",
     "files": [
@@ -34,7 +34,7 @@
   },
   {
     "id": "wood",
-    "source": "masonry.png",
+    "source": "generated/masonry.png",
     "sourceSha256": "205c6ab4bfb086934b4aa750611621cc62c07e401615f650b87198c3af6af884",
     "normal": "Inferred micro-height gradients; not measured surface normals.",
     "files": [
@@ -45,7 +45,7 @@
   },
   {
     "id": "scarlet",
-    "source": "hero.png",
+    "source": "generated/hero.png",
     "sourceSha256": "e03a0114709030b7b1ac2c8283af3af8d0c07c17e569b81511f4bb3b051fb661",
     "normal": "Inferred micro-height gradients; not measured surface normals.",
     "files": [
@@ -56,8 +56,8 @@
   },
   {
     "id": "black",
-    "source": "hero.png",
-    "sourceSha256": "e03a0114709030b7b1ac2c8283af3af8d0c07c17e569b81511f4bb3b051fb661",
+    "source": "generated/iron-clean.png",
+    "sourceSha256": "738899eaacb370096bc1058f9b8b002e13df7371772ea7e359cb0a0494c4c24b",
     "normal": "Inferred micro-height gradients; not measured surface normals.",
     "files": [
       "black.jpg",
@@ -67,8 +67,8 @@
   },
   {
     "id": "leather",
-    "source": "hero.png",
-    "sourceSha256": "e03a0114709030b7b1ac2c8283af3af8d0c07c17e569b81511f4bb3b051fb661",
+    "source": "generated/leather-clean.png",
+    "sourceSha256": "d549143d0c42d01280179432d54035bdc078b0d2b1510f15d4df69c832601b82",
     "normal": "Inferred micro-height gradients; not measured surface normals.",
     "files": [
       "leather.jpg",
@@ -78,7 +78,7 @@
   },
   {
     "id": "brass",
-    "source": "hero.png",
+    "source": "generated/hero.png",
     "sourceSha256": "e03a0114709030b7b1ac2c8283af3af8d0c07c17e569b81511f4bb3b051fb661",
     "normal": "Inferred micro-height gradients; not measured surface normals.",
     "files": [
@@ -89,7 +89,7 @@
   },
   {
     "id": "green",
-    "source": "details.png",
+    "source": "generated/details.png",
     "sourceSha256": "a9ff9b6714f87d444ec57f03f368ba01c05eaa5765c91435233a2b6daf137acf",
     "normal": "Inferred micro-height gradients; not measured surface normals.",
     "files": [
@@ -100,7 +100,7 @@
   },
   {
     "id": "cloth",
-    "source": "details.png",
+    "source": "generated/details.png",
     "sourceSha256": "a9ff9b6714f87d444ec57f03f368ba01c05eaa5765c91435233a2b6daf137acf",
     "normal": "Inferred micro-height gradients; not measured surface normals.",
     "files": [
@@ -111,7 +111,7 @@
   },
   {
     "id": "enamel",
-    "source": "details.png",
+    "source": "generated/details.png",
     "sourceSha256": "a9ff9b6714f87d444ec57f03f368ba01c05eaa5765c91435233a2b6daf137acf",
     "normal": "Inferred micro-height gradients; not measured surface normals.",
     "files": [
@@ -122,13 +122,23 @@
   },
   {
     "id": "soot",
-    "source": "details.png",
+    "source": "generated/details.png",
     "sourceSha256": "a9ff9b6714f87d444ec57f03f368ba01c05eaa5765c91435233a2b6daf137acf",
     "normal": "Inferred micro-height gradients; not measured surface normals.",
     "files": [
       "soot.jpg",
       "soot-normal.jpg",
       "soot-rough.jpg"
+    ]
+  },
+  {
+    "id": "slab",
+    "source": "masonry stone quadrant crop [40,38,230,220]",
+    "sourceSha256": "205c6ab4bfb086934b4aa750611621cc62c07e401615f650b87198c3af6af884",
+    "files": [
+      "slab.jpg",
+      "slab-normal.jpg",
+      "slab-rough.jpg"
     ]
   }
 ]

@@ -6,10 +6,11 @@ export type Palette = Record<string, THREE.MeshStandardMaterial>;
 export async function loadMaterials(manager: THREE.LoadingManager): Promise<Palette> {
   const loader = new THREE.TextureLoader(manager);
   const specs: [string, number, number, number][] = [
-    ['brick', 0, 1, .52], ['stone', .04, 1, .42], ['ballast', .04, 1, .75],
-    ['wood', 0, .95, .24], ['scarlet', .22, 1, .12], ['black', .64, .95, .16],
+    ['brick', 0, 1, .26], ['stone', 0, 1, .26], ['ballast', .04, 1, .75],
+    ['wood', 0, .95, .24], ['scarlet', .22, 1, .12], ['black', .34, .95, .10],
     ['leather', 0, 1, .28], ['brass', .83, .85, .12], ['green', .48, .92, .18],
     ['cloth', 0, 1, .52], ['enamel', .06, .8, .10], ['soot', .25, 1, .24],
+    ['slab', 0, 1, .25],
   ];
   const entries = await Promise.all(specs.map(async ([name, metalness, roughness, normalScale]) => {
     const [map, normalMap, roughnessMap] = await Promise.all([
@@ -21,6 +22,8 @@ export async function loadMaterials(manager: THREE.LoadingManager): Promise<Pale
     for (const t of [map, normalMap, roughnessMap]) {
       t.wrapS = t.wrapT = THREE.RepeatWrapping;
       t.anisotropy = 8;
+      if(name==='black') t.repeat.set(1.5,1.5);
+      if(name==='leather') t.repeat.set(2,2);
     }
     const material = new THREE.MeshStandardMaterial({
       name, map, normalMap, roughnessMap, metalness, roughness,
@@ -29,19 +32,32 @@ export async function loadMaterials(manager: THREE.LoadingManager): Promise<Pale
     return [name, material] as const;
   }));
   const materials = Object.fromEntries(entries);
+  materials.black.color.setScalar(.8);
+  materials.stone.color.set('#aaa391');
   materials.steel = materials.black.clone();
-  materials.steel.color.set('#b7bdc0');
+  materials.steel.color.setScalar(2.7);
   materials.steel.roughness = .60;
   materials.glass = new THREE.MeshStandardMaterial({
-    color: '#172620', metalness: .4, roughness: .25,
-    emissive: '#ba7631', emissiveIntensity: .18,
+    color: '#1b261c', metalness: .20, roughness: .36,
+    side: THREE.DoubleSide, emissive: '#a86c27', emissiveIntensity: .22,
+  });
+  materials.interior = materials.wood.clone();
+  materials.interior.color.set('#9b6c43');
+  materials.interior.emissive.set('#d08b35');
+  materials.interior.emissiveIntensity = .10;
+  materials.windowGlass = new THREE.MeshPhysicalMaterial({
+    name:'Weathered window glass',color:'#8e9e87',metalness:.20,roughness:.21,
+    transparent:true,opacity:.24,depthWrite:false,side:THREE.DoubleSide,
+    normalMap:materials.black.normalMap,normalScale:new THREE.Vector2(.008,.008),
   });
   materials.iron = materials.green.clone();
-  materials.iron.color.set('#637978');
+  materials.iron.color.set('#adb9b5');
+  materials.iron.emissive.set('#172827');
+  materials.iron.emissiveIntensity=.24;
   materials.iron.metalness = .72;
   materials.mortar = new THREE.MeshStandardMaterial({ color: '#6f6658', roughness: 1 });
   materials.glow = new THREE.MeshStandardMaterial({
-    color: '#ffdb91', emissive: '#ffc778', emissiveIntensity: 3.2, roughness: .35,
+    color: '#e8bb77', emissive: '#ffbf65', emissiveIntensity: .75, roughness: .35,
   });
   return materials;
 }

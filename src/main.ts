@@ -4,11 +4,13 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { HERO } from './config';
+import { Navigation } from './navigation';
 import { loadMaterials } from './materials';
 import { createStation } from './station';
 import { loadModels, placeAssets } from './assets';
-import { addLighting, createSteam, createWetPatches } from './atmosphere';
+import { addLighting, createSteam, createWetPatches, createLightShafts } from './atmosphere';
 import './style.css';
 
 function element<T extends HTMLElement>(id:string):T {
@@ -34,16 +36,21 @@ async function boot() {
   renderer.setPixelRatio(capture?1:Math.min(devicePixelRatio,1.5));
   renderer.setSize(innerWidth,innerHeight);
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.shadowMap.autoUpdate=false;
+  renderer.shadowMap.needsUpdate=true;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
   renderer.outputColorSpace=THREE.SRGBColorSpace;
   renderer.info.autoReset=false;
   renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();fail(new Error('WebGL graphics context was lost.'));});
   const scene=new THREE.Scene();
   const camera=new THREE.PerspectiveCamera(HERO.fov,innerWidth/innerHeight,HERO.near,HERO.far);
+  const navigation=new Navigation(camera,renderer.domElement);
   const controls=new OrbitControls(camera,renderer.domElement);
   controls.enableDamping=true;controls.enabled=false;controls.maxPolarAngle=Math.PI*.92;
   controls.minDistance=1;controls.maxDistance=60;controls.panSpeed=.5;controls.rotateSpeed=.40;
   const reset=()=>{
+    navigation.setEnabled(false);
+    element('explore').textContent='Explore the platform';
     camera.position.set(...HERO.position);camera.fov=HERO.fov;
     controls.target.set(...HERO.target);camera.lookAt(controls.target);camera.updateProjectionMatrix();
     controls.update();
@@ -67,10 +74,14 @@ async function boot() {
   scene.add(world);
   world.add(createStation(materials));
   const {group}=placeAssets(models,materials);world.add(group);
-  const steam=createSteam();world.add(steam.group,createWetPatches());
+  const steam=createSteam();world.add(steam.group,createWetPatches(),createLightShafts());
 
   const composer=new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene,camera));
+  const ao=new GTAOPass(scene,camera,innerWidth,innerHeight);
+  ao.blendIntensity=.52;
+  ao.updateGtaoMaterial({radius:.42,distanceExponent:1.3,thickness:.8});
+  composer.addPass(ao);
   const bloom=new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.12,.5,1.4);
   composer.addPass(bloom);composer.addPass(new OutputPass());
   let time=0,last=performance.now(),frames=0;
@@ -82,21 +93,21 @@ async function boot() {
   };
   element('reset').addEventListener('click',reset);
   element('explore').addEventListener('click',()=>{
-    controls.enabled=!controls.enabled;
-    element('explore').textContent=controls.enabled?'Pause exploration':'Explore the platform';
+    navigation.setEnabled(!navigation.enabled);
+    element('explore').textContent=navigation.enabled?'Pause exploration':'Explore the platform';
   });
   element('hide').addEventListener('click',()=>setUI(false));
   window.addEventListener('keydown',event=>{
     if(event.key.toLowerCase()==='r')reset();
     if(event.key.toLowerCase()==='h')setUI(!uiVisible);
-    if(event.key==='Escape') { controls.enabled=false;setUI(true);element('explore').textContent='Explore the platform'; }
+    if(event.key==='Escape') { navigation.setEnabled(false);setUI(true);element('explore').textContent='Explore the platform'; }
   });
   window.addEventListener('resize',()=>{
     camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
     renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);
   });
   const stats=()=>({
-    ready,frames,errors:[...failures],
+    ready,frames,errors:[...failures],exploring:navigation.enabled,
     meanFPS:durations.length?1000/(durations.reduce((a,b)=>a+b,0)/durations.length):0,
     frameP95:durations.length?[...durations].sort((a,b)=>a-b)[Math.floor(durations.length*.95)]:0,
     triangles:renderer.info.render.triangles,drawCalls:renderer.info.render.calls,
@@ -111,19 +122,21 @@ async function boot() {
     },
     setTime:(t:number)=>{time=t;steam.update(t);},
     setUI,
-    scene,camera,renderer,materials,controls,
+    scene,camera,renderer,materials,controls,navigation,
   }});
   await renderer.compileAsync(scene,camera);
   element('loading').hidden=true;setUI(!capture);ready=true;
   renderer.setAnimationLoop(now=>{
-    const dt=Math.min((now-last)/1000,.05);last=now;
+    const frameTime=now-last;
+    const dt=Math.min(frameTime/1000,.05);last=now;
     if(!capture)time+=dt;
-    controls.update();steam.update(time);
+    if(navigation.enabled)navigation.update(dt);else controls.update();
+    steam.update(time);
     const start=performance.now();
     renderer.info.reset();
     composer.render();
     const elapsed=performance.now()-start;
-    if(frames>30){durations.push(Math.max(elapsed,dt*1000));if(durations.length>240)durations.shift();}
+    if(frames>30){durations.push(Math.max(elapsed,frameTime));if(durations.length>240)durations.shift();}
     frames++;
   });
 }
