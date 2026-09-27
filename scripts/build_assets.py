@@ -302,23 +302,29 @@ def locomotive():
 def trunk(s, pos, size):
     x,y,z=pos; w,h,d=size
     s.box("leather",pos,size)
-    for xx in [x-w*.34,x+w*.34]:
-        for zz in [z-d*.505,z+d*.505]:
-            s.box("leather",(xx,y,zz),(.055,h,.022))
-        s.box("leather",(xx,y+h*.505,z),(.055,.024,d))
+    if d>w:
+        for zz in [z-d*.28,z+d*.28]:
+            for xx in [x-w*.505,x+w*.505]:
+                s.box("leather",(xx,y,zz),(.023,h,.032))
+            s.box("leather",(x,y+h*.505,zz),(w,.022,.032))
+    else:
+        for xx in [x-w*.34,x+w*.34]:
+            for zz in [z-d*.505,z+d*.505]:
+                s.box("leather",(xx,y,zz),(.028,h,.022))
+            s.box("leather",(xx,y+h*.505,z),(.028,.024,d))
     for xx in [x-w*.49,x+w*.49]:
         for zz in [z-d*.50,z+d*.50]:
             s.box("brass",(xx,y,zz),(.035,h,.035))
             for yy in [y-h*.46,y+h*.46]:
-                s.box("brass",(xx,y+(yy-y)*.95,zz),(.13,.08,.035))
-                s.box("brass",(xx,yy,zz),(.065,.16,.035))
+                s.box("brass",(xx,y+(yy-y)*.95,zz),(.08,.05,.023))
+                s.box("brass",(xx,yy,zz),(.045,.09,.023))
                 s.bolt("black",(xx,yy,zz-.025),radius=.013)
     for yy in [y-h*.47,y+h*.47]:
         for zz in [z-d*.505,z+d*.505]:
             s.box("brass",(x,yy,zz),(w,.014,.015))
     for xx in [x-w*.25,x+w*.25]:
-        s.box("brass",(xx,y+h*.25,z-d*.525),(.10,.14,.025))
-        s.bolt("black",(xx,y+h*.25,z-d*.54),radius=.018)
+        s.box("brass",(xx,y+h*.25,z-d*.525),(.065,min(.10,h*.35),.02))
+        s.bolt("black",(xx,y+h*.25,z-d*.54),radius=.012)
     s.tube("black",[(x-.12,y+.01,z-d*.54),(x-.09,y+.07,z-d*.59),(x+.09,y+.07,z-d*.59),(x+.12,y+.01,z-d*.54)],.022)
     for i in range(9):
         for xx in [x-w*.48,x+w*.48]:
@@ -327,56 +333,67 @@ def trunk(s, pos, size):
 
 def trolley():
     s=Sculpt()
-    s.box("wood",(0,.30,0),(1.32,.10,.86))
-    for x in [-.64,.64]:
-        s.cylinder("brass",(x,.35,-.43),(x,.35,.43),.04)
-        for z in [-.34,.34]:
-            s.wheel(x,.16,z,.15)
-    for z in [-.43,.43]:
-        s.cylinder("brass",(-.64,.35,z),(.64,.35,z),.04)
-    s.tube("brass",[(-.57,.35,.38),(-.57,1.87,.38),(-.53,2.02,.38),(-.4,2.12,.38),(.4,2.12,.38),(.53,2.02,.38),(.57,1.87,.38),(.57,.35,.38)],.029,12)
-    for y in [.78,1.22]:
-        s.cylinder("brass",(-.57,y,.38),(.57,y,.38),.022)
-    trunk(s,(0,.74,0),(1.15,.75,.73))
-    trunk(s,(-.4,.75,.45),(.35,.82,.32))
-    trunk(s,(.02,.44,.02),(1.05,.18,.63))
+    s.box("wood",(0,.29,0),(.74,.08,1.40))
+    for x in [-.35,.35]:
+        s.cylinder("brass",(x,.34,-.69),(x,.34,.69),.026)
+        for z in [-.55,.55]:
+            s.cylinder("soot",(x-.025,.135,z),(x+.025,.135,z),.13,40)
+            s.ring("black",(x,.135,z),.111,.023,"x",40,8)
+            s.cylinder("brass",(x-.038,.135,z),(x+.038,.135,z),.038,24)
+            s.ring("brass",(x+.028,.135,z),.084,.010,"x",32,6)
+            for i in range(6):
+                t=i*TAU/6
+                s.cylinder("brass",(x+.027,.135+.04*math.cos(t),z+.04*math.sin(t)),
+                             (x+.027,.135+.08*math.cos(t),z+.08*math.sin(t)),.010,6)
+            for xx in [x-.042,x+.042]:
+                s.box("brass",(xx,.226,z),(.014,.19,.052))
+    for z in [-.69,.69]:
+        s.cylinder("brass",(-.35,.34,z),(.35,.34,z),.026)
+    s.tube("brass",[(-.33,.34,.64),(-.33,1.67,.64),(-.28,1.81,.64),
+                    (-.18,1.86,.64),(.18,1.86,.64),(.28,1.81,.64),
+                    (.33,1.67,.64),(.33,.34,.64)],.022,12)
+    for y in [.74,1.17]:
+        s.cylinder("brass",(-.33,y,.64),(.33,y,.64),.016)
+    trunk(s,(0,.66,-.02),(.67,.62,1.16))
+    trunk(s,(0,1.06,.34),(.60,.16,.55))
+    trunk(s,(0,1.06,-.32),(.59,.16,.49))
     # Bird cage: individual wires with a smoothly domed top.
-    cx,cy,cz=-.29,1.15,.12
-    r=.30
+    cx,cy,cz=0,1.16,.35
+    r=.255
     s.cylinder("brass",(cx,cy,cz),(cx,cy+.045,cz),r,64)
     for i in range(40):
         a=TAU*i/40
-        pts=[(cx+r*math.cos(a),cy,cz+r*math.sin(a)),(cx+r*math.cos(a),cy+.50,cz+r*math.sin(a))]
+        pts=[(cx+r*math.cos(a),cy,cz+r*math.sin(a)),(cx+r*math.cos(a),cy+.38,cz+r*math.sin(a))]
         for j in range(1,13):
             t=j*PI/24
-            pts.append((cx+r*math.cos(t)*math.cos(a),cy+.50+r*math.sin(t),cz+r*math.cos(t)*math.sin(a)))
-        s.tube("brass",pts,.006,6)
-    for h in [.07,.25,.47,.52]:
-        s.ring("brass",(cx,cy+h,cz),r,.011,"y",64,6)
-    s.ring("brass",(cx,cy+.85,cz),.04,.010,"z",24,6)
+            pts.append((cx+r*math.cos(t)*math.cos(a),cy+.38+r*math.sin(t),cz+r*math.cos(t)*math.sin(a)))
+        s.tube("brass",pts,.0045,6)
+    for h in [.055,.20,.37,.42]:
+        s.ring("brass",(cx,cy+h,cz),r,.008,"y",64,6)
+    s.ring("brass",(cx,cy+.665,cz),.032,.008,"z",24,6)
     s.cylinder("wood",(cx-r*.8,cy+.13,cz),(cx+r*.8,cy+.13,cz),.016)
     # Continuous cloth shell with folds and draped tassels, not stacked boxes.
     vs=[]; fs=[]; uv=[]; nx=40; nz=48
     for j in range(nz+1):
         t=j/nz
-        z=.32-.84*t
-        y=1.33 if t<.72 else 1.33-(t-.72)*2.2
+        z=-.08-.71*t
+        y=1.29 if t<.70 else 1.29-(t-.70)*1.12
         for i in range(nx+1):
-            u=i/nx; x=.03+u*.58
-            vs.append((x,y+.024*math.sin(u*TAU*5+t*4)+.014*math.sin(t*TAU*6),z))
+            u=i/nx; x=-.28+u*.56
+            vs.append((x,y+.008*math.sin(u*TAU*4+t*4)+.006*math.sin(t*TAU*3),z))
             uv.append((u*2,t*3))
             if i and j:
                 n=j*(nx+1)+i
                 fs.append((n,n-1,n-nx-2,n-nx-1))
     s.mesh("cloth",vs,fs,uv,smooth=True)
-    for k in range(42):
-        x=.03+k*.58/41
-        s.tube("cloth",[(x,.71,-.52),(x+.006,.64,-.53),(x-.004,.57,-.52)],.004,5)
+    for k in range(34):
+        x=-.28+k*.56/33
+        s.tube("cloth",[(x,.955,-.79),(x+.004,.905,-.80),(x-.003,.85,-.79)],.0035,5)
     # A folded return of the same blanket sits on the top face.
     for j in range(3):
-        s.box("cloth",(.32,1.185+j*.055,.10),(.58,.052,.46))
-        s.tube("cloth",[(.055,1.185+j*.055,-.16),(.10,1.21+j*.055,-.18),
-                        (.55,1.21+j*.055,-.18),(.605,1.185+j*.055,-.16)],.024,10)
+        s.box("cloth",(0,1.165+j*.048,-.33),(.56,.045,.45))
+        s.tube("cloth",[(-.26,1.165+j*.048,-.56),(-.21,1.19+j*.048,-.58),
+                        (.21,1.19+j*.048,-.58),(.26,1.165+j*.048,-.56)],.020,10)
     return s
 
 
@@ -500,7 +517,7 @@ def lantern():
     return s
 
 
-def build(root_path):
+def build(root_path, only=None):
     root=Path(root_path)
     (root/"public"/"models").mkdir(parents=True,exist_ok=True)
     original_scene=bpy.context.window.scene
@@ -523,8 +540,12 @@ def build(root_path):
     generated=[]
     for name,factory in [("locomotive",locomotive),("trolley",trolley),("bench",bench),
                          ("tender",tender),("carriage",carriage),("carriage-far",lambda:carriage(True)),("sign",sign),("lantern",lantern)]:
+        if only is not None and name!=only:
+            continue
         scene=factory().export(root,name,mats)
         generated.append({"name":name,"objects":len(scene.objects),"vertices":sum(len(o.data.vertices) for o in scene.objects)})
+    if not generated:
+        raise ValueError(f"Unknown asset selection: {only}")
     bpy.context.window.scene=original_scene
     bpy.ops.wm.save_as_mainfile(filepath=str(root/".dream-loop"/"platform-nine-assets.blend"))
     return generated

@@ -10,8 +10,8 @@ export async function loadMaterials(manager: THREE.LoadingManager): Promise<{
   const specs: [string, number, number, number][] = [
     ['brick', 0, 1, .26], ['stone', 0, 1, .26], ['ballast', .04, 1, .75],
     ['wood', 0, .95, .24], ['scarlet', .22, 1, .12], ['black', .34, .95, .10],
-    ['leather', 0, 1, .28], ['brass', .83, .85, .12], ['green', .48, .92, .18],
-    ['cloth', 0, 1, .52], ['enamel', .06, .8, .10], ['soot', .25, 1, .24],
+    ['leather', 0, 1, .10], ['brass', .83, .85, .12], ['green', .48, .92, .18],
+    ['cloth', 0, 1, .16], ['enamel', .06, .8, .10], ['soot', .25, 1, .24],
     ['slab', 0, 1, .25],
   ];
   const entries = await Promise.all(specs.map(async ([name, metalness, roughness, normalScale]) => {

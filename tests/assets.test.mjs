@@ -45,3 +45,20 @@ test('runtime uses the Pages subpath and never fetches private reference files',
     assert.doesNotMatch(readFileSync(`src/${file}`,'utf8'),/target\.png|reference\/|\.dream-loop/);
   }
 });
+
+test('trolley uses small rubber casters and a longitudinal case arrangement',()=>{
+  const bytes=readFileSync('public/models/trolley.glb');
+  const gltf=JSON.parse(bytes.subarray(20,20+bytes.readUInt32LE(12)).toString());
+  const extent=name=>{
+    const mesh=gltf.meshes.find(mesh=>mesh.name.startsWith(name));
+    assert.ok(mesh,`Missing ${name}`);
+    const position=gltf.accessors[mesh.primitives[0].attributes.POSITION];
+    return position.max.map((value,i)=>value-position.min[i]);
+  };
+  const rubber=extent('trolley_soot');
+  assert.ok(rubber[1]>.20&&rubber[1]<.28,'Caster diameter must remain near 0.26 metres.');
+  const cases=extent('trolley_leather');
+  assert.ok(cases[2]>cases[0]*1.5,'Cases must extend along the cart, not form a wide crosswise block.');
+  assert.ok(!gltf.materials.some(material=>material.name.startsWith('PN_scarlet')),
+    'The cart must not inherit scarlet locomotive running wheels.');
+});

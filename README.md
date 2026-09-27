@@ -9,7 +9,7 @@ The locked visual requirements are in [`goal.md`](goal.md).
 custom Blender-authored GLB assets, thirteen material sets, modular station
 architecture, lighting, animated steam, and optional exploration.
 The retained Dream Loop scores progressed through **4.0**, **4.5**, **5.1**,
-**5.7**, **6.0**, and now **6.1/10**; visual acceptance
+**5.7**, **6.0**, **6.1**, and now **6.2/10**; visual acceptance
 requires at least **8.0/10** plus acceptable measured performance.
 The architectural rethink now has deep-section girders, connected roof columns,
 recessed window rooms, multilevel facades, laid slabs, diffuse puddle boundaries,
@@ -35,7 +35,7 @@ companion maps carry seam-check failures, and their normal/roughness maps are
 explicitly heuristic; they are not measured material ground truth.
 
 After the earlier 5.7/10 stall, offline surface authoring on the solid locomotive
-mesh produced a new best of **6.1/10**. The isolated de-lit asset reference is
+mesh and corrected luggage geometry produced a new best of **6.2/10**. The isolated de-lit asset reference is
 fitted to actual mesh landmarks and assigned to fixed, visibility-tested UVs.
 This is not a target-scene background or a texture that follows the live camera;
 the original geometry remains, and unseen faces retain their PBR materials.
@@ -68,8 +68,8 @@ exploration. `?capture` hides UI and fixes animation time for comparison.
 The capture command uses an isolated `agent-browser` session and saves the
 actual browser screenshot, metrics, and console output under `.dream-loop/captures/`.
 
-The current 1920x1080 checkpoint measured approximately 54 FPS, with contact
-shadows and planar reflections, 506 draw calls, and 5.44 million triangles
+The current 1920x1080 checkpoint measured approximately 55 FPS, with contact
+shadows and planar reflections, 502 draw calls, and 5.34 million triangles
 including repeated render passes. GLBs are Draco-compressed and include a
 distant-coach LOD. The surface-authored locomotive adds a fixed UV texture.
 Static shadow caching removed redundant rendering. These are local
@@ -113,6 +113,10 @@ with the repository path. It reads `scripts/data/locomotive-surface-fit.json`
 and the local isolated de-lit reference, and writes `locomotive-surfaced.glb`
 plus source/geometry hashes. Tests reject a stale mesh/UV-authoring pairing.
 `scripts/prepare_steam.py` packages the existing alpha-validated steam references.
+Individual mesh updates can use `namespace["build"](root, only="trolley")`,
+avoiding unnecessary changes to the locomotive/UV pair. The trolley has dedicated
+0.26 m rubber casters, not reused locomotive wheels, and its cases run along
+the cart's longitudinal axis. The geometry contract tests check those proportions.
 
 `scripts/prepare_textures.py` splits the existing generated atlases into portable
 maps. It requires Pillow and NumPy. Source atlases are local working assets;

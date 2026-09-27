@@ -65,7 +65,7 @@ export function placeAssets(models:Record<ModelName,THREE.Group>, m:Palette) {
     carriage.position.set(-1.40,0,16.6+i*10.5);group.add(carriage);
   }
   const trolley=place('trolley',[5.95,WORLD.platform,-3.7],-.24,1.0);
-  trolley.scale.y=.78;
+  trolley.scale.y=.85;
   for(const z of [1.8,15,28,41,55]) place('bench',[6.58,WORLD.platform,z],-Math.PI/2);
   const sign=place('sign',[5.73,4.91,2.4],0,1.45);
   const face=new THREE.Mesh(new THREE.CircleGeometry(.452,96),signFace(m.enamel.map));
