@@ -8,7 +8,8 @@ The locked visual requirements are in [`goal.md`](goal.md).
 **Status: runnable and deployed; visual acceptance is not complete.** The Three.js scene includes seven
 custom Blender-authored GLB assets, thirteen material sets, modular station
 architecture, lighting, animated steam, and optional exploration.
-The independent Dream Loop judgments are **4.0/10**, **4.5/10**, **5.1/10**, then **5.7/10**; visual acceptance
+The retained Dream Loop scores progressed through **4.0**, **4.5**, **5.1**,
+**5.7**, **6.0**, and now **6.1/10**; visual acceptance
 requires at least **8.0/10** plus acceptable measured performance.
 The architectural rethink now has deep-section girders, connected roof columns,
 recessed window rooms, multilevel facades, laid slabs, diffuse puddle boundaries,
@@ -33,12 +34,17 @@ visual round. That variant scored **5.6/10** and was also rejected. Several
 companion maps carry seam-check failures, and their normal/roughness maps are
 explicitly heuristic; they are not measured material ground truth.
 
-The Pro loop has reached its stall condition: two materially different
-approaches failed to improve on the retained **5.7/10** checkpoint. The remaining
-gap is primarily detailed locomotive/luggage geometry, roof hierarchy,
-material-specific wear, and integrated lighting/wetness. Further work needs
-a better asset source or a changed reconstruction approach; authenticated
-image-to-3D access would allow alternatives to the quota-limited trial.
+After the earlier 5.7/10 stall, offline surface authoring on the solid locomotive
+mesh produced a new best of **6.1/10**. The isolated de-lit asset reference is
+fitted to actual mesh landmarks and assigned to fixed, visibility-tested UVs.
+This is not a target-scene background or a texture that follows the live camera;
+the original geometry remains, and unseen faces retain their PBR materials.
+The improved checkpoint also removes duplicated numbering, uses the supplied
+steam sequence, and reduces the mirror-like wet-platform response.
+
+Work is continuing on luggage geometry, architectural hierarchy, material wear,
+and integrated illumination. A separate physically path-traced probe was
+rejected for interactive use after measuring only 1-3 full-frame samples/second.
 The required score remains **8.0/10**; it has not been lowered or declared met.
 
 ## Run and capture
@@ -62,10 +68,10 @@ exploration. `?capture` hides UI and fixes animation time for comparison.
 The capture command uses an isolated `agent-browser` session and saves the
 actual browser screenshot, metrics, and console output under `.dream-loop/captures/`.
 
-The retained 1920x1080 scene measured approximately 60 FPS after closing the
-owned diagnostic browser sessions, with contact shadows and planar reflections,
-643 draw calls, and 4.82 million triangles including repeated render passes.
-The compressed GLB set is approximately 2.3 MB and includes a distant-coach LOD.
+The current 1920x1080 checkpoint measured approximately 54 FPS, with contact
+shadows and planar reflections, 506 draw calls, and 5.44 million triangles
+including repeated render passes. GLBs are Draco-compressed and include a
+distant-coach LOD. The surface-authored locomotive adds a fixed UV texture.
 Static shadow caching removed redundant rendering. These are local
 measurements, not guarantees for every browser or GPU.
 
@@ -100,6 +106,13 @@ namespace["build"]("/path/to/platform-nine-1")
 The script preserves the original scene and creates separate asset scenes.
 The generated GLBs in `public/models/` are runtime-ready and require no Blender
 installation to view.
+
+After changing the authored locomotive, run `scripts/author_reference_uv.py` in
+Blender with the same namespace-loading pattern, then call `namespace["author"]`
+with the repository path. It reads `scripts/data/locomotive-surface-fit.json`
+and the local isolated de-lit reference, and writes `locomotive-surfaced.glb`
+plus source/geometry hashes. Tests reject a stale mesh/UV-authoring pairing.
+`scripts/prepare_steam.py` packages the existing alpha-validated steam references.
 
 `scripts/prepare_textures.py` splits the existing generated atlases into portable
 maps. It requires Pillow and NumPy. Source atlases are local working assets;

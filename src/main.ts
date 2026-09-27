@@ -67,14 +67,14 @@ async function boot() {
     element('loading-text').textContent=`Preparing the platform · ${loaded} / ${total}`;
   };
   manager.onError=url=>fail(new Error(`Asset failed: ${url}`));
-  const {palette:materials,wetness}=await loadMaterials(manager);
+  const {palette:materials,wetness,steam:steamTextures}=await loadMaterials(manager);
   const models=await loadModels(manager,materials);
   const world=new THREE.Group();
   world.name='Platform Nine world';world.scale.x=-1;
   scene.add(world);
   world.add(createStation(materials));
   const {group}=placeAssets(models,materials);world.add(group);
-  const steam=createSteam(),wetPatches=createWetPatches(wetness);
+  const steam=createSteam(steamTextures),wetPatches=createWetPatches(wetness);
   world.add(steam.group,wetPatches,createLightShafts());
   // Capture the real station for coherent, world-derived metal reflections.
   const probeTarget=new THREE.WebGLCubeRenderTarget(256,{type:THREE.HalfFloatType});

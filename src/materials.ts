@@ -3,7 +3,9 @@ import { assetURL, WORLD } from './config';
 
 export type Palette = Record<string, THREE.MeshStandardMaterial>;
 
-export async function loadMaterials(manager: THREE.LoadingManager): Promise<{palette:Palette;wetness:THREE.Texture}> {
+export async function loadMaterials(manager: THREE.LoadingManager): Promise<{
+  palette:Palette;wetness:THREE.Texture;steam:{plume:THREE.Texture;flipbook:THREE.Texture};
+}> {
   const loader = new THREE.TextureLoader(manager);
   const specs: [string, number, number, number][] = [
     ['brick', 0, 1, .26], ['stone', 0, 1, .26], ['ballast', .04, 1, .75],
@@ -66,7 +68,12 @@ export async function loadMaterials(manager: THREE.LoadingManager): Promise<{pal
   materials.glow = new THREE.MeshStandardMaterial({
     color: '#e8bb77', emissive: '#ffbf65', emissiveIntensity: .75, roughness: .35,
   });
-  const wetness=await loader.loadAsync(assetURL('textures/wetness-world.png'));
+  const [wetness,plume,flipbook]=await Promise.all([
+    loader.loadAsync(assetURL('textures/wetness-world.png')),
+    loader.loadAsync(assetURL('fx/plume.webp')),
+    loader.loadAsync(assetURL('fx/flipbook.webp')),
+  ]);
+  plume.colorSpace=flipbook.colorSpace=THREE.SRGBColorSpace;
   wetness.flipY=false;wetness.anisotropy=8;
   materials.slab.onBeforeCompile=shader=>{
     shader.uniforms.floorWetness={value:wetness};
@@ -83,11 +90,11 @@ export async function loadMaterials(manager: THREE.LoadingManager): Promise<{pal
       .replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
         vec2 floorUv=vec2((-vFloorPoint.x-${WORLD.edge.toFixed(2)})/${(WORLD.wall-WORLD.edge).toFixed(2)},(vFloorPoint.z+8.0)/68.0);
         float water=texture2D(floorWetness,clamp(floorUv,0.0,1.0)).r;
-        roughnessFactor=mix(roughnessFactor,0.45,water);
+        roughnessFactor=mix(roughnessFactor,0.63,water);
         diffuseColor.rgb*=mix(1.0,0.73,water);`);
   };
-  materials.slab.customProgramCacheKey=()=> 'world-wetness-v1';
-  return {palette:materials,wetness};
+  materials.slab.customProgramCacheKey=()=> 'world-wetness-v2';
+  return {palette:materials,wetness,steam:{plume,flipbook}};
 }
 
 export function signFace(enamel: THREE.Texture | null) {

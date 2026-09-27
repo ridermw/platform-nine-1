@@ -1,0 +1,49 @@
+{
+  "painted": 55589,
+  "faces": 475968,
+  "objects": [
+    {
+      "object": "locomotive_black.009",
+      "painted": 17201,
+      "faces": 119964
+    },
+    {
+      "object": "locomotive_brass.009",
+      "painted": 5187,
+      "faces": 48012
+    },
+    {
+      "object": "locomotive_enamel.009",
+      "painted": 20,
+      "faces": 92
+    },
+    {
+      "object": "locomotive_glass.009",
+      "painted": 139,
+      "faces": 1560
+    },
+    {
+      "object": "locomotive_scarlet.009",
+      "painted": 14925,
+      "faces": 181856
+    },
+    {
+      "object": "locomotive_soot.009",
+      "painted": 867,
+      "faces": 3516
+    },
+    {
+      "object": "locomotive_steel.009",
+      "painted": 17250,
+      "faces": 120968
+    }
+  ],
+  "asset": "locomotive-surfaced.glb",
+  "source": "isolation/delit/locomotive.png",
+  "sourceSha256": "513806393bff2385bf2089bda9ecc488cec3f9d9ffa84fe4ca54042bbe978c93",
+  "geometrySha256": "84b279fec12044f37ded770511ca2dfc0d11dd0451a52e3fd9de22ead8c74a63",
+  "runtimeSha256": "ec92b372967737d121e3cf096a3bac85d18603ac3445249cea33f4e763d8a6e9",
+  "method": "fixed asset UVs, visible faces only, authored solid geometry preserved and subdivided for surface detail",
+  "hiddenSurfaces": "Retain the existing authored PBR materials.",
+  "cameraFitRmsPixels": 16.0282099294268
+}

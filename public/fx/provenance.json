@@ -1,0 +1,8 @@
+{
+  "source": "reference/companion/steam",
+  "grid": 4,
+  "frames": 16,
+  "fps": 12,
+  "plumeSha256": "7179d863ceff71731c1dbc87966cc7a06a200d92f78bb3654817566466b28672",
+  "flipbookSha256": "04b5fbf083d8c252bb31db17bf2f047c1ad6e86c0a784ff7ed243262f6618efa"
+}

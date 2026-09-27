@@ -1,48 +1,31 @@
 import * as THREE from 'three';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
-import { ImprovedNoise } from 'three/addons/math/ImprovedNoise.js';
-import { seededRandom, WORLD } from './config';
+import { WORLD } from './config';
 
-export function createSteam() {
+export function createSteam(textures:{plume:THREE.Texture;flipbook:THREE.Texture}) {
   const group=new THREE.Group();
-  group.name='Translucent steam';
-  const random=seededRandom(1923);
-  const canvas=document.createElement('canvas');
-  canvas.width=canvas.height=128;
-  const ctx=canvas.getContext('2d');
-  if(!ctx) throw new Error('Could not create steam texture.');
-  const image=ctx.createImageData(128,128);
-  const noise=new ImprovedNoise();
-  for(let y=0;y<128;y++) for(let x=0;x<128;x++) {
-    const dx=(x-64)/62,dy=(y-64)/62,r=dx*dx+dy*dy;
-    const cloud=.50+.28*noise.noise(x/19,y/19,1.4)+.13*noise.noise(x/8,y/8,2.1);
-    const alpha=Math.max(0,1-r)**2*Math.max(0,cloud)*.48;
-    const i=(y*128+x)*4;
-    image.data[i]=image.data[i+1]=image.data[i+2]=224;image.data[i+3]=alpha*255;
-  }
-  ctx.putImageData(image,0,0);
-  const texture=new THREE.CanvasTexture(canvas);
-  const particles:{sprite:THREE.Sprite;seed:number;low:boolean}[]=[];
-  for(let i=0;i<95;i++) {
-    const low=i>=42;
-    const mat=new THREE.SpriteMaterial({map:texture,transparent:true,depthWrite:false,opacity:low?.19:.32,color:low?'#b2b4ac':'#b7b6ae',fog:true});
-    const sprite=new THREE.Sprite(mat);
-    group.add(sprite);particles.push({sprite,seed:random(),low});
-  }
+  group.name='Reference steam';
+  const plumeMaterial=new THREE.SpriteMaterial({map:textures.plume,transparent:true,depthWrite:false,color:'#bfc2c0',opacity:.56,fog:true});
+  const plume=new THREE.Sprite(plumeMaterial);plume.center.set(.5,0);
+  plume.position.set(-1.25,5.30,1.39);plume.scale.set(2.6,2.2,1);group.add(plume);
+  const frames=Array.from({length:16},(_,i)=>{
+    const texture=textures.flipbook.clone();
+    texture.repeat.set(.25,.25);texture.offset.set((i%4)/4,(3-Math.floor(i/4))/4);
+    texture.needsUpdate=true;
+    return new THREE.SpriteMaterial({map:texture,transparent:true,depthWrite:false,opacity:.28,color:'#bbc0bc',fog:true});
+  });
+  const particles=Array.from({length:26},(_,i)=>{
+    const phase=(i*.61803398875)%1,sprite=new THREE.Sprite(frames[0]);
+    sprite.scale.setScalar(1.2);group.add(sprite);
+    return {sprite,phase,z:1.7+(i%13)*.57};
+  });
   function update(time:number) {
-    for(const [i,p] of particles.entries()) {
-      const age=(p.seed+time*(p.low?.048:.068))%1;
-      const y=p.low?.75+age*.9:4.66+age*4.4;
-      p.sprite.position.set(
-        (p.low?1.14+age*.42+Math.sin(i*3.7+time*.4)*.12:Math.sin(i*2.3+age*4)*age*.26-age*.3)-1.4,
-        p.low?y:y+.68,
-        p.low?1.7+(i%20)*.31+age*.8:1.2+age*2.0+Math.cos(i*1.7)*age*.24,
-      );
-      const size=p.low?.55+age*.8:.35+age*2.4;
-      p.sprite.scale.set(size,size*1.15,1);
-      p.sprite.material.opacity=(p.low?.23:.82)*Math.sin(age*Math.PI);
-      p.sprite.material.rotation=p.seed*6+age*.8;
+    plumeMaterial.rotation=.01*Math.sin(time*.3);
+    for(const p of particles) {
+      const age=(p.phase+time*12/16)%1;
+      p.sprite.material=frames[Math.floor(age*16)];
+      p.sprite.position.set(-.18+age*.6,.92+age*.55,p.z+age*.35);
     }
   }
   update(0);
@@ -51,7 +34,7 @@ export function createSteam() {
 
 export function addLighting(scene:THREE.Scene) {
   scene.background=new THREE.Color('#b4bec0');
-  scene.fog=new THREE.FogExp2('#6d7e81',.012);
+  scene.fog=new THREE.FogExp2('#6d7e81',.017);
   scene.add(new THREE.HemisphereLight('#b9cfde','#413227',1.3));
   const key=new THREE.DirectionalLight('#ffdc9e',1.2);
   key.position.set(5,13,26);key.target.position.set(-1,0,2);
@@ -119,7 +102,7 @@ export function createWetPatches(wetness:THREE.Texture) {
          + texture2D(tDiffuse, st+vec2(-d.x,d.y))) / 6.0;`)
     .replace('gl_FragColor = vec4( blendOverlay( base.rgb, color ), 1.0 );',
       `float water=texture2D(floorWetness,vWaterUv).r;
-       gl_FragColor = vec4( blendOverlay( base.rgb, color ), 0.40*smoothstep(0.15,0.85,water) );`);
+       gl_FragColor = vec4( base.rgb * vec3(0.62,0.39,0.18), 0.30*smoothstep(0.15,0.85,water) );`);
   reflector.rotation.x=-Math.PI/2;
   reflector.position.set((WORLD.edge+WORLD.wall)/2,WORLD.platform+.038,26);
   group.add(reflector);

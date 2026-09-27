@@ -10,21 +10,32 @@ export async function loadModels(manager: THREE.LoadingManager, palette: Palette
   draco.setDecoderPath(assetURL('draco/'));draco.setWorkerLimit(2);
   loader.setDRACOLoader(draco);
   const pairs=await Promise.all(MODEL_NAMES.map(async name=>{
-    const gltf=await loader.loadAsync(assetURL(`models/${name}.glb`));
+    const file=name==='locomotive'?'locomotive-surfaced':name;
+    const gltf=await loader.loadAsync(assetURL(`models/${file}.glb`));
     gltf.scene.traverse(node=>{
       if(!(node instanceof THREE.Mesh)) return;
       const materials=Array.isArray(node.material)?node.material:[node.material];
       const replacements=materials.map(material=>{
-        const key=material.name.replace(/^PN_/,'').replace(/\.\d+$/,'');
+        const label=material.name.replace(/^PN_/,'').replace(/\.\d+$/,'');
+        const painted=label.endsWith('_refpaint');
+        const key=label.replace(/_refpaint$/,'');
         const replacement=palette[key];
         if(!replacement) throw new Error(`Unknown material ${material.name} in ${name}`);
+        if(painted) {
+          if(!(material instanceof THREE.MeshStandardMaterial))throw new Error('Surface-authored material must be PBR.');
+          material.roughness=replacement.roughness;material.metalness=replacement.metalness;
+          material.normalMap=replacement.normalMap;material.normalScale.copy(replacement.normalScale);
+          material.roughnessMap=replacement.roughnessMap;
+          material.color.copy(replacement.color).multiplyScalar(key==='scarlet'?.32:.65);
+          return material;
+        }
         material.dispose();
         return name==='lantern'&&key==='enamel'?palette.glow:replacement;
       });
       node.material=replacements.length===1?replacements[0]:replacements;
       node.castShadow=node.receiveShadow=true;
       // Explicit hard edges prevent box faces from shading like inflated cushions.
-      if(node.geometry) node.geometry.computeVertexNormals();
+      if(node.geometry&&name!=='locomotive') node.geometry.computeVertexNormals();
     });
     gltf.scene.name=name;
     return [name,gltf.scene] as const;
@@ -82,15 +93,6 @@ export function placeAssets(models:Record<ModelName,THREE.Group>, m:Palette) {
     }
     luggage.position.set(x,WORLD.platform,z);luggage.rotation.y=.1;group.add(luggage);
   }
-  const plate=document.createElement('canvas');plate.width=512;plate.height=256;
-  const ctx=plate.getContext('2d');
-  if(!ctx) throw new Error('Could not create locomotive number plate.');
-  ctx.fillStyle='#14191a';ctx.fillRect(0,0,512,256);
-  ctx.strokeStyle='#bfa46b';ctx.lineWidth=8;ctx.beginPath();ctx.ellipse(256,128,243,112,0,0,Math.PI*2);ctx.stroke();
-  ctx.fillStyle='#c6ae76';ctx.font='190px Georgia';ctx.textAlign='center';ctx.fillText('8',256,194);
-  const tex=new THREE.CanvasTexture(plate);tex.colorSpace=THREE.SRGBColorSpace;
-  const number=new THREE.Mesh(new THREE.PlaneGeometry(.28,.14),new THREE.MeshStandardMaterial({map:tex,metalness:.4,roughness:.5}));
-  number.rotation.y=Math.PI;number.position.set(-1.25,2.68,.17);group.add(number);
   // Printed notices remain surface decals on real framed boards.
   const paper=document.createElement('canvas');paper.width=256;paper.height=640;
   const pc=paper.getContext('2d');
