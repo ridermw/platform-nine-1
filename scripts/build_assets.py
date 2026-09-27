@@ -40,6 +40,7 @@ class Sculpt:
         pts = [Vector(p) for p in points]
         vertices, uv, faces = [], [], []
         length = 0
+        stride = sides + 1
         for i, p in enumerate(pts):
             tangent = (pts[min(i+1,len(pts)-1)]-pts[max(0,i-1)]).normalized()
             axis = Vector((0,1,0)) if abs(tangent.y) < .92 else Vector((1,0,0))
@@ -48,15 +49,19 @@ class Sculpt:
             if i:
                 length += (p-pts[i-1]).length
             r = radius[i] if isinstance(radius,list) else radius
-            for j in range(sides):
+            for j in range(stride):
                 v = p + r * (a*math.cos(TAU*j/sides)+b*math.sin(TAU*j/sides))
                 vertices.append(tuple(v))
                 uv.append((j/sides, length))
             if i:
                 for j in range(sides):
-                    nj=(j+1)%sides
-                    faces.append(((i-1)*sides+j,(i-1)*sides+nj,i*sides+nj,i*sides+j))
-        faces.extend([tuple(reversed(range(sides))),tuple((len(pts)-1)*sides+j for j in range(sides))])
+                    faces.append(((i-1)*stride+j,(i-1)*stride+j+1,i*stride+j+1,i*stride+j))
+        for end in [0, len(pts)-1]:
+            start = len(vertices)
+            vertices.extend(vertices[end*stride:end*stride+sides])
+            uv.extend((.5+.5*math.cos(TAU*j/sides),.5+.5*math.sin(TAU*j/sides)) for j in range(sides))
+            cap = tuple(start+j for j in range(sides))
+            faces.append(tuple(reversed(cap)) if end == 0 else cap)
         self.mesh(m,vertices,faces,uv)
 
     def cylinder(self, m, a, b, radius, sides=32):

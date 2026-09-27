@@ -1,0 +1,23 @@
+:root { color-scheme: dark; font-family: Georgia, 'Times New Roman', serif; color: #eadcc2; background: #171c1d; }
+* { box-sizing: border-box; }
+body { margin: 0; overflow: hidden; }
+canvas#world { display: block; width: 100vw; height: 100dvh; touch-action: none; }
+[hidden] { display: none !important; }
+#loading { position: fixed; inset: 0; display: grid; place-content: center; text-align: center; background: #171c1d; z-index: 5; }
+.eyebrow { font: 10px/1.5 system-ui, sans-serif; letter-spacing: .28em; color: #b4a588; }
+h1 { font-weight: 400; font-size: clamp(40px, 6vw, 82px); letter-spacing: -.035em; margin: 16px 0; }
+#loading p { font: 12px system-ui, sans-serif; color: #b2aba0; }
+progress { width: 240px; height: 2px; border: 0; margin: 12px auto; accent-color: #d3bc8d; }
+progress::-webkit-progress-bar { background: #444641; }
+progress::-webkit-progress-value { background: #d3bc8d; transition: width .25s; }
+#identity { position: fixed; top: 25px; left: 30px; display: flex; gap: 14px; align-items: center; pointer-events: none; text-shadow: 0 2px 8px #000; }
+.mark { font-size: 31px; border-right: 1px solid #d8c7a744; padding-right: 15px; }
+.mark sup,.mark sub { font-size: 12px; }
+#identity > span:last-child { font: 11px system-ui,sans-serif; letter-spacing: .2em; }
+small { display: block; font-size: 7px; letter-spacing: .17em; margin-top: 5px; color: #cec2a6; }
+#controls { position: fixed; bottom: 27px; right: 30px; display: flex; gap: 8px; }
+button { border: 1px solid #eadcc23d; border-radius: 2px; color: #f0e1c4; background: #182122bc; padding: 11px 16px; font: 11px system-ui,sans-serif; backdrop-filter: blur(14px); cursor: pointer; }
+button:hover,button:focus-visible { background: #68563ccc; border-color: #dec899; outline: none; }
+#hint { position: fixed; left: 30px; bottom: 27px; font: 10px/1.5 system-ui,sans-serif; color: #d9cdb8; text-shadow: 0 1px 4px #000; }
+#error { position: fixed; inset: 20px; z-index: 10; padding: 32px; background: #311c19; color: #ffdbb4; font: 15px/1.7 system-ui,sans-serif; white-space: pre-wrap; }
+@media(max-width:700px) { #hint { display: none; } #identity { left: 16px; top: 16px; } #controls { bottom: 18px; right: 12px; left: 12px; justify-content: center; } button { padding: 10px 12px; } }
