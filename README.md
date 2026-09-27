@@ -5,7 +5,7 @@ The locked visual requirements are in [`goal.md`](goal.md).
 
 ## Progress
 
-**Checkpoint 4: reviewed, runnable browser world.** The Three.js scene includes seven
+**Status: runnable and deployed; visual acceptance is not complete.** The Three.js scene includes seven
 custom Blender-authored GLB assets, thirteen material sets, modular station
 architecture, lighting, animated steam, and optional exploration.
 The independent Dream Loop judgments are **4.0/10**, **4.5/10**, **5.1/10**, then **5.7/10**; visual acceptance
@@ -27,10 +27,19 @@ and bench reconstruction requests were rejected by the provider's anonymous
 GPU quota. The candidate and verdicts remain local in `.dream-loop/`.
 
 The 4K manifest also links to an older companion run containing PBR sets,
-steam textures, and a scene contract. These have now been copied into
-`.dream-loop/reference/companion/` and are being evaluated. Several companion
-maps carry seam-check failures, and their normal/roughness maps are explicitly
-heuristic, so they are not automatically treated as ground truth.
+steam textures, and a scene contract. These were copied into
+`.dream-loop/reference/companion/`, inspected, adapted, and tested in a sixth
+visual round. That variant scored **5.6/10** and was also rejected. Several
+companion maps carry seam-check failures, and their normal/roughness maps are
+explicitly heuristic; they are not measured material ground truth.
+
+The Pro loop has reached its stall condition: two materially different
+approaches failed to improve on the retained **5.7/10** checkpoint. The remaining
+gap is primarily detailed locomotive/luggage geometry, roof hierarchy,
+material-specific wear, and integrated lighting/wetness. Further work needs
+a better asset source or a changed reconstruction approach; authenticated
+image-to-3D access would allow alternatives to the quota-limited trial.
+The required score remains **8.0/10**; it has not been lowered or declared met.
 
 ## Run and capture
 
